@@ -1,0 +1,19 @@
+{
+  "name": "express-module-membership",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thecodebureau/express-module-membership.git"
+  },
+  "author": "Linus Miller <lohfu@lohfu.io> (https://lohfu.io/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thecodebureau/express-module-membership/issues"
+  },
+  "homepage": "https://github.com/thecodebureau/express-module-membership#readme"
+}
