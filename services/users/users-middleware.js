@@ -1,5 +1,7 @@
 'use strict';
 
+const url = require('url');
+
 // modules > 3rd party
 const _ = require('lodash');
 const nodemailer = require('nodemailer');
@@ -38,9 +40,9 @@ function getRoles(req, email, callback) {
   }
 }
 
-const resetPasswordTemplate = require('./reset-password-email');
-const verifyTemplate = require('./verify-email');
-const welcomeTemplate = require('./welcome-email');
+const resetPasswordTemplate = require('./reset-password-email.marko');
+//const verifyTemplate = require('./verify-email');
+//const welcomeTemplate = require('./welcome-email');
 
 module.exports = {
   register(req, res, next) {
@@ -272,22 +274,24 @@ module.exports = {
         return next(err);
       }
 
-      user.resetPassword();
+      user.resetPassword(function (err) {
+        if (err) return next(err);
 
-      const link = 'https://' + config.domain + '/reset?email=' + encodeURI(user.email) + '&code=' + user.local.reset.code;
+        const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&code=' + user.local.reset.code;
 
-      resetPasswordTemplate.render({ link }, function (err, html) {
-        if (err) next(err);
+        resetPasswordTemplate.render({ link }, function (err, html) {
+          if (err) next(err);
 
-        transport.sendMail({
-          from: config.details.title + ' <' + config.mail.emails.robot + '>',
-          to: user.email,
-          subject: 'Reset ' + config.details.title + ' password',
-          html
-        }, function () {
-        // TODO handle error... should not be sent
+          transport.sendMail({
+            from: config.site.title + ' <' + config.site.emails.robot + '>',
+            to: user.email,
+            subject: 'Reset ' + config.site.title + ' password',
+            html
+          }, function () {
+          // TODO handle error... should not be sent
 
-          res.status(200).send();
+            res.status(200).json({ ok: true });
+          });
         });
       });
     });
@@ -344,10 +348,10 @@ module.exports = {
       if (err) return next(err);
 
       if (!user) {
-        err = new Error('No user found');
-        err.status = 404;
-        err.details = _.omit(req.body.password);
-        return next(err);
+        return next(_.extend(new Error('No user found'), {
+          status: 404,
+          details: _.omit(req.body.password)
+        }));
       }
 
       user.local.password = req.body.password;
@@ -355,11 +359,9 @@ module.exports = {
       user.local.reset = undefined;
 
       user.save(function (err) {
-        if (err) {
-          return next(err);
-        }
-        res.status(200);
-        res.send();
+        if (err) return next(err);
+
+        res.status(200).json({ ok: true });
       });
     });
   }
