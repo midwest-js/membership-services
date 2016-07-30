@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/thecodebureau/express-module-membership/issues"
   },
-  "homepage": "https://github.com/thecodebureau/express-module-membership#readme"
+  "homepage": "https://github.com/thecodebureau/express-module-membership#readme",
+  "dependencies": {
+    "lodash": "^4.14.1",
+    "nodemailer": "^2.5.0",
+    "passport": "^0.3.2",
+    "warepot": "0.0.1"
+  }
 }
