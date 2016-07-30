@@ -7,7 +7,7 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const config = require('../config').membership;
 
-const User = require('../services/users/users-model');
+const User = require('../services/users/model');
 
 function localCallback(email, password, done) {
   User.findOne({ email: email.toLowerCase() }, function (err, user) {

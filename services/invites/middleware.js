@@ -4,7 +4,7 @@ const url = require('url');
 const _ = require('lodash');
 const nodemailer = require('nodemailer');
 
-const Invite = require('./invites-model');
+const Invite = require('./model');
 
 const config = require('../../config');
 
@@ -15,7 +15,7 @@ const mw = {
   paginate: require('warepot/paginate')
 };
 
-const template = require('./invite-email.marko');
+const template = require('./email.marko');
 
 module.exports = {
   create(req, res, next) {

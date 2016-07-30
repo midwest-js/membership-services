@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 
-const Role = require('./roles-model');
+const Role = require('./model');
 
 const mw = {
   formatQuery: require('warepot/format-query'),

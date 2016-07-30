@@ -8,9 +8,9 @@ const nodemailer = require('nodemailer');
 const passport = require('passport');
 
 // models
-const User = require('./users-model');
-const Permission = require('../permissions/permissions-model');
-const Invite = require('../invites/invites-model');
+const User = require('./model');
+const Permission = require('../permissions/model');
+const Invite = require('../invites/model');
 
 const config = require('../../config');
 

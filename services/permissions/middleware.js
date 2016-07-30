@@ -7,7 +7,7 @@ const mw = {
   paginate: require('warepot/paginate')
 };
 
-const Permission = require('./permissions-model');
+const Permission = require('./model');
 
 module.exports = {
   create(req, res, next) {

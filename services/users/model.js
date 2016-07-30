@@ -6,7 +6,9 @@ const crypto = require('crypto');
 // modules > 3rd party
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
+const config = require('../../config');
+
+const UserSchema = new mongoose.Schema(Object.assign({
   email: { type: String, required: true, unique: true },
   local: {
     password: String,
@@ -38,7 +40,7 @@ const UserSchema = new mongoose.Schema({
   isBlocked: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false }
 
-});
+}, config.membership.userSchema));
 
 UserSchema.methods.login = function () {
   this.lastLogin = Date.now();

@@ -1,6 +1,6 @@
 'use strict';
 
-const mw = require('./users-middleware');
+const mw = require('./middleware');
 
 const isAuthenticated = require('../../passport/authorization-middleware').isAuthenticated;
 

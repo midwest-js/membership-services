@@ -2,7 +2,7 @@
 
 const passport = require('passport');
 
-const User = require('../services/users/users-model');
+const User = require('../services/users/model');
 
 // used to serialize the user for the session
 passport.serializeUser(function (user, done) {
