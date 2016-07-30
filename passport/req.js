@@ -1,17 +1,19 @@
+'use strict';
+
 /*
  * This file extends the req prototype with some useful functions
  *
  * @module server/passport/req.js
  */
 
-'use strict';
+const _ = require('lodash');
 
 const reqProto = require('http').IncomingMessage.prototype;
 
 reqProto.hasRoles = function (roles) {
   if (!_.isArray(roles)) roles = [ roles ];
 
-  return this.isAuthenticated() && roles.every(this.user.hasRole);
+  return this.isAuthenticated() && roles.every(this.user.hasRole.bind(this.user));
 };
 
 reqProto.isAdmin = function () {
@@ -26,6 +28,6 @@ reqProto.login = function (user, req) {
   if (this.session && this.session.newUser)
     delete req.session.newUser;
 
-  this._login.apply(this, arguments);
+  this._login(...arguments);
 };
 

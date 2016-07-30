@@ -3,6 +3,7 @@
 const passport = require('passport');
 const redirect = require('warepot/redirect');
 
+require('./setup');
 //const passportMiddleware = require('./middleware');
 const config = require('../config').membership;
 
@@ -23,7 +24,7 @@ function local(req, res, next) {
       return next(err);
 
     if (req.body.remember) {
-      if(config.remember.expires)
+      if (config.remember.expires)
         req.session.cookie.expires = config.remember.expires;
       else
         req.session.cookie.maxAge = config.remember && config.remember.maxAge;

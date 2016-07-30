@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const passport = require('passport');
 
 const LocalStrategy = require('passport-local').Strategy;
