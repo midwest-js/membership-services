@@ -1,8 +1,8 @@
-'use strict';
+'use strict'
 
-const mw = require('./middleware');
+const mw = require('./middleware')
 
-const isAuthenticated = require('../../passport/authorization-middleware').isAuthenticated;
+const isAuthenticated = require('../../passport/authorization-middleware').isAuthenticated
 
 module.exports = [
   [ '/api/roles/', 'get', [ isAuthenticated, mw.formatQuery, mw.paginate, mw.find ]],
@@ -10,4 +10,4 @@ module.exports = [
   [ '/api/roles/:id', 'delete', [ isAuthenticated, mw.remove ]],
   [ '/api/roles/:id', 'get', [ isAuthenticated, mw.findById ]],
   [ '/api/roles/:id', 'put', [ isAuthenticated, mw.put ]],
-];
+]

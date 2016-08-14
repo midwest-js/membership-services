@@ -1,11 +1,11 @@
-'use strict';
+'use strict'
 
-const p = require('path');
+const p = require('path')
 
 const config = {
   smtp: require('./smtp'),
   site: require('./site')
-};
+}
 
 module.exports = {
   invite: {
@@ -68,4 +68,4 @@ module.exports = {
       }
     }
   }
-};
+}

@@ -1,8 +1,8 @@
-'use strict';
+'use strict'
 
-const mw = require('./middleware');
+const mw = require('./middleware')
 
-const isAuthenticated = require('../../passport/authorization-middleware').isAuthenticated;
+const isAuthenticated = require('../../passport/authorization-middleware').isAuthenticated
 
 module.exports = [
 	[ '/api/users/', 'get', [ isAuthenticated, mw.query ] ],
@@ -13,4 +13,4 @@ module.exports = [
 	[ '/api/users/:id', 'put', [ isAuthenticated, mw.update ] ],
 	[ '/api/users/reset-password', 'post', [ mw.resetPassword ] ],
 	[ '/api/users/update-password', 'post', [ mw.updatePassword ] ],
-];
+]

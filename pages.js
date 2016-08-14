@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 const mw = {
   permissions: require('./services/permissions/permissions-middleware'),
   roles: require('./services/roles/roles-middleware'),
   invites: require('./services/invites/invites-middleware'),
-};
+}
 
 module.exports = [ {
   title: 'Membership',
@@ -36,9 +36,9 @@ module.exports = [ {
         name: 'permission',
         reload: true,
         middleware: [ mw.roles.getAll, function (req, res, next) {
-          res.locals.allRoles = res.locals.roles;
-          delete res.locals.roles;
-          next();
+          res.locals.allRoles = res.locals.roles
+          delete res.locals.roles
+          next()
         }, mw.permissions.findById ],
         nav: false
       }]
@@ -54,9 +54,9 @@ module.exports = [ {
         template: 'admin/pages/membership/invite',
         reload: true,
         middleware: [ mw.roles.getAll, function (req, res, next) {
-          res.locals.allRoles = res.locals.roles;
-          delete res.locals.roles;
-          next();
+          res.locals.allRoles = res.locals.roles
+          delete res.locals.roles
+          next()
         }, mw.invites.findById ],
         nav: false
       }]
@@ -64,4 +64,4 @@ module.exports = [ {
       title: 'Users'
     }
   ]
-} ];
+} ]
