@@ -16,6 +16,12 @@ const config = require('../../config')
 
 const transport = nodemailer.createTransport(config.mail)
 
+const mw = {
+  formatQuery: require('warepot/format-query'),
+  paginate: require('warepot/paginate')
+}
+
+
 function getRoles(req, email, callback) {
   if (!req.body.roles) {
     Invite.findOne({ email }, function (err, invite) {
@@ -114,38 +120,19 @@ function getCurrent(req, res, next) {
 }
 
 function query(req, res, next) {
-  let options = []
+  const page = Math.max(0, req.query.page) || 0
+  const perPage = Math.max(0, req.query.limit) || res.locals.perPage
 
-  const queryDocument = _.fromPairs(_.toPairs(req.query).filter(function (arr) {
-    if (/^_/.test(arr[0])) {
-      arr[0] = arr[0].slice(1)
-      options.push(arr)
-      return false
-    }
+  const query = User.find(_.omit(req.query, 'limit', 'sort', 'page'),
+    null,
+    { sort: req.query.sort || 'name', lean: true })
 
-    return true
-  }))
+  if (perPage)
+    query.limit(perPage).skip(perPage * page)
 
-  options = _.fromPairs(options)
-
-  const query = User.find(queryDocument)
-
-  _.each(options, function (value, key) {
-    query[key](value)
-  })
-
-  query.exec(function (err, users) {
-    if (err) return next(err)
-
-    res.locals.users = users
-
-    User.count(queryDocument, function (err, count) {
-      if (err) return next(err)
-
-      res.set('X-Collection-Length', count)
-
-      next()
-    })
+  query.exec((err, roles) => {
+    res.locals.roles = roles
+    next(err)
   })
 }
 
@@ -375,7 +362,9 @@ module.exports = {
   exists,
   findAll,
   findOne,
+  formatQuery: mw.formatQuery([ 'limit', 'sort', 'page' ]),
   getCurrent,
+  paginate: mw.paginate(User, 20),
   query,
   register,
   remove,
