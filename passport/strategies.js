@@ -1,15 +1,18 @@
 'use strict'
 
-const passport = require('passport')
+// modules > native
+const p = require('path')
 
+// modules > passport
+const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 
-const config = require('../config').membership
+const config = require(p.join(process.cwd(), 'server/config/membership'))
 
 const User = require('../services/users/model')
 
 function localCallback(email, password, done) {
-  User.findOne({ email: email.toLowerCase() }, function (err, user) {
+  User.findOne({ email: email.toLowerCase() }, (err, user) => {
     if (err)
       return done(err)
 

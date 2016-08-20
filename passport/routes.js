@@ -1,20 +1,24 @@
 'use strict'
 
+// modules > native
+const p = require('path')
+
+// modules > 3rd party
 const passport = require('passport')
 const redirect = require('warepot/redirect')
 
 require('./setup')
-//const passportMiddleware = require('./middleware')
-const config = require('../config').membership
+
+const config = require(p.join(process.cwd(), 'server/config/membership'))
 
 function _401(str) {
-  const err = new Error(str ? str.message || str : 'No message')
-  err.status = 401
-  return err
+  return Object.assign(new Error(str ? str.message || str : 'No message'), {
+    status: 401
+  })
 }
 
 function local(req, res, next) {
-  return function (err, user, message) {
+  return (err, user, message) => {
     // message will only be set if passport strategy has encountered login
     // error (not a coding error).
     if (message)
@@ -31,7 +35,7 @@ function local(req, res, next) {
     }
 
 
-    req.login(user, function (err) {
+    req.login(user, (err) => {
       if (err) return next(err)
 
       user = user.toObject()
@@ -40,10 +44,10 @@ function local(req, res, next) {
       res.status(200)
 
       res.format({
-        html: function () {
+        html() {
           res.redirect(req.session.lastPath || '/')
         },
-        json: function () {
+        json() {
           if (req.session.lastPath) res.set('Location', req.session.lastPath)
 
           res.json(user)
@@ -54,11 +58,11 @@ function local(req, res, next) {
 }
 
 const mw = {
-  local: function (req, res, next) {
+  local: (req, res, next) => {
     passport.authenticate('local', local(req, res, next))(req, res, next)
   },
 
-  logout: function (req, res, next) {
+  logout: (req, res, next) => {
     req.logout()
     res.status(200)
     res.locals.ok = true

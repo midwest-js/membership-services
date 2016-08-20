@@ -8,14 +8,14 @@ const mongoose = require('mongoose')
  * to automatically login as.
  */
 
-module.exports = function pre(req, res, next) {
+module.exports = function automaticLogin(req, res, next) {
   if (ENV === 'development' && global.LOGIN_USER && !req.user) {
     const User = mongoose.model('User')
 
-    User.findOne({ email: LOGIN_USER }, function (err, user) {
+    User.findOne({ email: LOGIN_USER }, (err, user) => {
       if (err) return next(err)
 
-      req.login(user, function (err) {
+      req.login(user, (err) => {
         if (err) return next(err)
 
         next()

@@ -1,9 +1,12 @@
 'use strict'
 
+// modules > native
 const url = require('url')
+const p = require('path')
 
 // modules > 3rd party
 const _ = require('lodash')
+const requireDir = require('require-dir')
 const nodemailer = require('nodemailer')
 const passport = require('passport')
 
@@ -12,9 +15,9 @@ const User = require('./model')
 const Permission = require('../permissions/model')
 const Invite = require('../invites/model')
 
-const config = require('../../config')
+const config = requireDir(p.join(process.cwd(), 'server/config'))
 
-const transport = nodemailer.createTransport(config.mail)
+const transport = nodemailer.createTransport(config.smtp)
 
 const mw = {
   formatQuery: require('warepot/format-query'),
@@ -114,7 +117,7 @@ function findAll(req, res, next) {
 }
 
 function getCurrent(req, res, next) {
-  res.locals.user = req.user && _.omit(req.user.toJSON(), [ 'local', 'google', 'facebook' ])
+  res.locals.user = req.user && _.omit(req.user.toJSON(), [ 'local', 'facebook' ])
 
   next()
 }

@@ -1,14 +1,12 @@
 'use strict'
 
-// modules > 3rd party
+// modules > native
 const crypto = require('crypto')
 
 // modules > 3rd party
 const mongoose = require('mongoose')
 
-const config = require('../../config')
-
-const UserSchema = new mongoose.Schema(Object.assign({
+const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   local: {
     password: String,
@@ -17,16 +15,6 @@ const UserSchema = new mongoose.Schema(Object.assign({
       code: String
     },
     verificationCode: { type: String },
-  },
-  facebook: {
-    id: String,
-    token: String,
-    email: String
-  },
-  google: {
-    id: String,
-    token: String,
-    email: String
   },
   givenName: String,
   familyName: String,
@@ -39,8 +27,7 @@ const UserSchema = new mongoose.Schema(Object.assign({
   isBanned: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false }
-
-}, config.membership.userSchema))
+})
 
 UserSchema.methods.login = function () {
   this.lastLogin = Date.now()
@@ -48,7 +35,7 @@ UserSchema.methods.login = function () {
   if (this.local.reset)
     this.local.reset = undefined
 
-  this.save(function (err) {
+  this.save((err) => {
     // TODO send error to error handler
     if (err) console.log(err)
   })
@@ -73,7 +60,7 @@ UserSchema.methods.resetPassword = function (next) {
     code: hash
   }
 
-  this.save(function (err) {
+  this.save((err) => {
     // TODO ensure response doesnt get sent twice
     next(err)
   })
@@ -81,7 +68,7 @@ UserSchema.methods.resetPassword = function (next) {
 
 const SALT_LENGTH = 16
 
-UserSchema.path('local.password').set(function (password) {
+UserSchema.path('local.password').set((password) => {
   // generate salt
   password = password.trim()
   const chars = '0123456789abcdefghijklmnopqurstuvwxyz'
