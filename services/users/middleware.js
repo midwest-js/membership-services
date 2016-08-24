@@ -27,17 +27,15 @@ const mw = {
 
 function getRoles(req, email, callback) {
   if (!req.body.roles) {
-    Invite.findOne({ email }, function (err, invite) {
+    Invite.findOne({ email }, (err, invite) => {
       if (err) return callback(err)
 
       let roles = invite ? invite.roles : []
 
-      Permission.findMatches(email, function (err, permissions) {
+      Permission.findMatches(email, (err, permissions) => {
         if (err) callback(err)
 
-        for (let i = 0; i < permissions.length; i++) {
-          roles = _.union(roles, permissions[i].roles)
-        }
+        roles = _.union(roles, ...permissions.map(permission => permission.roles))
 
         return callback(null, roles, invite)
       })
@@ -55,7 +53,7 @@ const resetPasswordTemplate = require('./reset-password-email.marko')
 
 // middleware that checks if an email and reset code are valid
 function checkReset(req, res, next) {
-  User.findOne({ email: req.query.email, 'local.reset.code': req.query.code }, function (err, user) {
+  User.findOne({ email: req.query.email, 'local.reset.code': req.query.code }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
@@ -77,15 +75,16 @@ function checkReset(req, res, next) {
 }
 
 function exists(property) {
-  return function (req, res, next) {
+  return (req, res, next) => {
     // TODO maybe return true?
     if (!req.query[property])
       return res.json(false)
 
-    const query = {}
-    query[property] = req.query[property]
+    const query = {
+      [property]: req.query[property]
+    }
 
-    User.findOne(query, function (err, user) {
+    User.findOne(query, (err, user) => {
       if (err) return next(err)
 
       if (user)
@@ -100,7 +99,7 @@ function findOne(req, res, next) {
   if (req.params.id === 'me')
     return next()
 
-  User.findById(req.params.id).lean().exec(function (err, user) {
+  User.findById(req.params.id).lean().exec((err, user) => {
     if (err) return next(err)
 
     res.locals.user = _.omit(user, [ 'local', 'facebook' ])
@@ -109,7 +108,7 @@ function findOne(req, res, next) {
 }
 
 function findAll(req, res, next) {
-  User.find(req.query, function (err, users) {
+  User.find(req.query, (err, users) => {
     if (err) return next(err)
     res.locals.users = users
     return next()
@@ -147,7 +146,7 @@ function register(req, res, next) {
       return next(new Error(config.membership.messages.register.missingProperties))
   }
 
-  User.findOne({ email: req.body.email }, function (err, user) {
+  User.findOne({ email: req.body.email }, (err, user) => {
     if (err) next(err)
 
     else if (user) {
@@ -169,7 +168,7 @@ function register(req, res, next) {
 
       const newUser = new User(req.body)
 
-      getRoles(req, req.body.email, function (err, roles, invite) {
+      getRoles(req, req.body.email, (err, roles, invite) => {
         if (err) return next(err)
 
         if (roles.length < 1) {
@@ -183,7 +182,7 @@ function register(req, res, next) {
         // TEMP
         newUser.isVerified = true
 
-        newUser.save(function (err) {
+        newUser.save((err) => {
           if (invite) {
             invite.dateConsumed = new Date()
             invite.save()
@@ -208,13 +207,13 @@ function register(req, res, next) {
           //} else {
           //  res.locals.ok = true
           //  newUser.generateVerificationCode()
-          //  verifyTemplate.render({ user: newUser }, function (err, html) {
+          //  verifyTemplate.render({ user: newUser }, (err, html) => {
           //    transport.sendMail({
           //      from: config.site.title + ' <' + config.site.emails.robot + '>',
           //      to: newUser.email,
           //      subject: 'Verify ' + config.site.title + ' account',
           //      html
-          //    }, function (err) {
+          //    }, (err) => {
           //      // TODO handle error... should not be sent
           //      if (err) return next(err)
 
@@ -229,7 +228,7 @@ function register(req, res, next) {
 }
 
 function remove(req, res, next) {
-  User.remove({ _id: req.params.id }, function (err, count) {
+  User.remove({ _id: req.params.id }, (err, count) => {
     if (err) return next(err)
 
     if (count > 0) {
@@ -260,12 +259,12 @@ function resetPassword(req, res, next) {
       return next(err)
     }
 
-    user.resetPassword(function (err) {
+    user.resetPassword((err) => {
       if (err) return next(err)
 
       const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&code=' + user.local.reset.code
 
-      resetPasswordTemplate.render({ link }, function (err, html) {
+      resetPasswordTemplate.render({ link }, (err, html) => {
         if (err) next(err)
 
         transport.sendMail({
@@ -284,14 +283,14 @@ function resetPassword(req, res, next) {
 }
 
 function update(req, res, next) {
-  User.findById(req.params.id, function (err, user) {
+  User.findById(req.params.id, (err, user) => {
     if (req.body.email) {
       req.body.email = req.body.email.toLowerCase().trim()
     }
 
     _.extend(user, _.omit(req.body, [ '_id', '__v', 'local', 'facebook' ]))
 
-    user.save(function (err) {
+    user.save((err) => {
       if (err) {
         return next(err)
       }
@@ -309,7 +308,7 @@ function updatePassword(req, res, next) {
     return next(new Error('Not enough parameters'))
   }
 
-  User.findOne({ email: req.body.email, 'local.reset.code': req.body.code }, function (err, user) {
+  User.findOne({ email: req.body.email, 'local.reset.code': req.body.code }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
@@ -323,7 +322,7 @@ function updatePassword(req, res, next) {
 
     user.local.reset = undefined
 
-    user.save(function (err) {
+    user.save((err) => {
       if (err) return next(err)
 
       res.status(200).json({ ok: true })
@@ -333,7 +332,7 @@ function updatePassword(req, res, next) {
 
 // middleware that checks if an email and reset code are valid
 function verify(req, res, next) {
-  User.findOne({ email: req.query.email, 'local.verificationCode': req.query.code }, function (err, user) {
+  User.findOne({ email: req.query.email, 'local.verificationCode': req.query.code }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
@@ -352,8 +351,8 @@ function verify(req, res, next) {
 
     user.isVerified = true
     delete user.local.verificationCode
-    user.save(function () {
-      req.login(user, function () {
+    user.save(() => {
+      req.login(user, () => {
         res.redirect('/registered')
       })
     })
