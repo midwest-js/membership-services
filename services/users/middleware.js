@@ -87,10 +87,8 @@ function exists(property) {
     User.findOne(query, (err, user) => {
       if (err) return next(err)
 
-      if (user)
-        return res.json(false)
-
-      return res.json(true)
+      // return true if user is found
+      return res.json(!!user)
     })
   }
 }
@@ -110,7 +108,9 @@ function findOne(req, res, next) {
 function findAll(req, res, next) {
   User.find(req.query, (err, users) => {
     if (err) return next(err)
+
     res.locals.users = users
+
     return next()
   })
 }
