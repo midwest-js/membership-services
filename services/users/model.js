@@ -7,13 +7,19 @@ const crypto = require('crypto')
 // modules > 3rd party
 const mongoose = require('mongoose')
 const _ = require('lodash')
+const isEmail = require('validator/lib/isEmail')
 
 const config = require(p.join(process.cwd(), 'server/config/membership'))
 
 const providers = config.providers || []
 
 const UserSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: [ isEmail, 'Not a valid email' ]
+  },
   local: {
     password: String,
     reset: {
