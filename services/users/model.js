@@ -1,10 +1,16 @@
 'use strict'
 
 // modules > native
+const p = require('path')
 const crypto = require('crypto')
 
 // modules > 3rd party
 const mongoose = require('mongoose')
+const _ = require('lodash')
+
+const config = require(p.join(process.cwd(), 'server/config/membership'))
+
+const providers = config.providers || []
 
 const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
@@ -27,6 +33,13 @@ const UserSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
   isVerified: { type: Boolean, default: false }
+})
+
+UserSchema.pre('validate', function (next) {
+  if (!_.has(this, ...providers) && !_.get(this, 'local.password'))
+    this.invalidate('local.password', 'Path `local.password` must be supplied if no social login')
+
+  next()
 })
 
 UserSchema.methods.login = function () {
