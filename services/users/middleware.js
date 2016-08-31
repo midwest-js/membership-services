@@ -24,6 +24,20 @@ const mw = {
   paginate: require('warepot/paginate')
 }
 
+function create(req, res, next) {
+  User.create(req.body, (err, user) => {
+    if (err) return next(err)
+
+    /* HTTP specification says Location header shoult be included when creating
+     * a new entity with POST
+     */
+    res.set('Location', req.url + '/' + user._id)
+      .status(201)
+      .locals.user = _.omit(user.toJSON(), 'local')
+
+    next()
+  })
+}
 
 function getRoles(req, email, callback) {
   if (!req.body.roles) {
@@ -361,6 +375,7 @@ function verify(req, res, next) {
 
 module.exports = {
   checkReset,
+  create,
   exists,
   findAll,
   findOne,

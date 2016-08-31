@@ -6,7 +6,7 @@ const isAuthenticated = require('../../passport/authorization-middleware').isAut
 
 module.exports = [
   [ '/api/users/', 'get', isAuthenticated, mw.formatQuery, mw.query ],
-  [ '/api/users/', 'post', mw.register ],
+  [ '/api/users/', 'post', isAuthenticated, mw.create ],
   [ '/api/users/me', 'get', mw.getCurrent ],
   [ '/api/users/:id', 'delete', isAuthenticated, mw.remove],
   [ '/api/users/:id', 'get', isAuthenticated, mw.findOne ],
