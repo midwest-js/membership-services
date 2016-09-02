@@ -40,25 +40,20 @@ function create(req, res, next) {
 }
 
 function getRoles(req, email, callback) {
-  if (!req.body.roles) {
-    Invite.findOne({ email }, (err, invite) => {
-      if (err) return callback(err)
+  Invite.findOne({ email }, (err, invite) => {
+    if (err) return callback(err)
 
-      let roles = invite ? invite.roles : []
+    let roles = invite ? invite.roles : []
 
-      Permission.findMatches(email, (err, permissions) => {
-        if (err) callback(err)
+    Permission.findMatches(email, (err, permissions) => {
+      if (err) callback(err)
 
+      if (permissions)
         roles = _.union(roles, ...permissions.map(permission => permission.roles))
 
-        return callback(null, roles, invite)
-      })
+      return callback(null, roles, invite)
     })
-  } else if (req.isAdmin()) {
-    return callback(null, req.body.roles)
-  } else {
-    return callback(null, [])
-  }
+  })
 }
 
 const resetPasswordTemplate = require('./reset-password-email.marko')
