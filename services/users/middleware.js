@@ -16,6 +16,7 @@ const Permission = require('../permissions/model')
 const Invite = require('../invites/model')
 
 const config = requireDir(p.join(process.cwd(), 'server/config'))
+const providers = config.membership.providers || []
 
 const transport = nodemailer.createTransport(config.smtp)
 
@@ -57,8 +58,9 @@ function getRoles(req, email, callback) {
 }
 
 const resetPasswordTemplate = require('./reset-password-email.marko')
-//const verifyTemplate = require('./verify-email')
-//const welcomeTemplate = require('./welcome-email')
+
+const verifyTemplate = require('./verify-email')
+const welcomeTemplate = require('./welcome-email')
 
 // middleware that checks if an email and reset code are valid
 function checkReset(req, res, next) {
@@ -183,7 +185,7 @@ function register(req, res, next) {
       getRoles(req, req.body.email, (err, roles, invite) => {
         if (err) return next(err)
 
-        if (roles.length < 1) {
+        if (!roles) {
           err = new Error(config.membership.messages.register.notAuthorized)
           err.status = 401
           return next(err)
@@ -192,47 +194,62 @@ function register(req, res, next) {
         newUser.roles = roles
 
         // TEMP
-        newUser.isVerified = true
+        if (invite || !_.isEmpty(provider))
+          newUser.isVerified = true
 
         newUser.save((err) => {
+          if (err) return next(err)
+
           if (invite) {
             invite.dateConsumed = new Date()
             invite.save()
           }
 
-          req.login(newUser, () => res.status(201).json(newUser))
-          //function respond() {
-          //  if (req.xhr) {
-          //    res.json(_.isEmpty(provider) ? null : _.omit(newUser.toJSON(), [ 'local' ].concat(passport.providers)))
-          //  } else {
-          //    res.redirect('/registered')
-          //  }
-          //}
+          function respond() {
+            if (req.xhr) {
+              res.status(201).json(_.omit(newUser.toJSON(), 'local', ...providers))
+            } else {
+              res.redirect(config.membership.redirects.register)
+            }
+          }
 
-          //if (err) return next(err)
+          if (err) return next(err)
 
-          //res.status(201)
+          res.status(201)
 
-          //if (!_.isEmpty(provider)) {
-          //  newUser.isVerified = true
-          //  req.login(newUser, respond)
-          //} else {
-          //  res.locals.ok = true
-          //  newUser.generateVerificationCode()
-          //  verifyTemplate.render({ user: newUser }, (err, html) => {
-          //    transport.sendMail({
-          //      from: config.site.title + ' <' + config.site.emails.robot + '>',
-          //      to: newUser.email,
-          //      subject: 'Verify ' + config.site.title + ' account',
-          //      html
-          //    }, (err) => {
-          //      // TODO handle error... should not be sent
-          //      if (err) return next(err)
+          if (newUser.isVerified) {
+            req.login(newUser, () => {
+              welcomeTemplate.render({ user: newUser }, (err, html) => {
+                transport.sendMail({
+                  from: config.site.title + ' <' + config.site.emails.robot + '>',
+                  to: newUser.email,
+                  subject: 'Welcome to ' + config.site.title + '!',
+                  html
+                }, (err) => {
+                  // TODO handle error... should not be sent
+                  if (err) return next(err)
 
-          //      respond()
-          //    })
-          //  })
-          //}
+                  respond()
+                })
+              })
+            })
+          } else {
+            newUser.generateVerificationCode()
+
+            verifyTemplate.render({ user: newUser }, (err, html) => {
+              transport.sendMail({
+                from: config.site.title + ' <' + config.site.emails.robot + '>',
+                to: newUser.email,
+                subject: 'Verify ' + config.site.title + ' account',
+                html
+              }, (err) => {
+                // TODO handle error... should not be sent
+                if (err) return next(err)
+
+                respond()
+              })
+            })
+          }
         })
       })
     }
