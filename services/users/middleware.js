@@ -156,8 +156,11 @@ function register(req, res, next) {
   if (!req.body.email) {
     if (req.body.facebook && req.body.facebook.email)
       req.body.email = req.body.facebook.email
-    else
-      return next(new Error(config.membership.messages.register.missingProperties))
+    else {
+      const err = new Error(config.membership.messages.register.missingProperties)
+      err.status = 422
+      return next(err)
+    }
   }
 
   User.findOne({ email: req.body.email }, (err, user) => {
