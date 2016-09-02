@@ -6,6 +6,9 @@ const p = require('path')
 // modules > 3rd party
 const passport = require('passport')
 const redirect = require('warepot/redirect')
+const { register } = require('express-module-membership/services/users/middleware')
+const router = new (require('express')).Router()
+
 
 require('./setup')
 
@@ -70,11 +73,9 @@ const mw = {
   }
 }
 
-const routes = [
-  [ '/auth/local', 'post', [ mw.local ]],
-  [ '/auth/logout', 'get', [ mw.logout, redirect('/') ]],
-  //[ '/auth/local', 'post', [ passportMiddleware.initialize, passportMiddleware.session, mw.local ]],
-  //[ '/auth/logout', 'get', [ passportMiddleware.initialize, passportMiddleware.session, mw.logout, redirect('/') ]],
-]
+router
+  .post('/local', mw.local)
+  .get('/logout', mw.logout, redirect('/'))
+  .post('/register', register)
 
-module.exports = routes
+module.exports = router
