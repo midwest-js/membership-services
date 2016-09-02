@@ -75,7 +75,7 @@ const mw = {
 
 router
   .post('/local', mw.local)
-  .get('/logout', mw.logout, redirect('/'))
+  .get('/logout', mw.logout, redirect(config.redirects.logout))
   .post('/register', register)
 
 module.exports = router
