@@ -1,5 +1,5 @@
 {
-  "name": "express-module-membership",
+  "name": "midwest-module-membership",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thecodebureau/express-module-membership.git"
+    "url": "git+https://github.com/thebitmill/midwest-module-membership.git"
   },
   "author": "Linus Miller <lohfu@lohfu.io> (https://lohfu.io/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/thecodebureau/express-module-membership/issues"
+    "url": "https://github.com/thebitmill/midwest-module-membership/issues"
   },
-  "homepage": "https://github.com/thecodebureau/express-module-membership#readme",
+  "homepage": "https://github.com/thebitmill/midwest-module-membership#readme",
   "dependencies": {
     "lodash": "^4.15.0",
     "mongoose": "^4.5.9",
