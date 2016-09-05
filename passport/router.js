@@ -27,8 +27,21 @@ function local(req, res, next) {
     if (message)
       err = _401(message)
 
-    if (err)
+    if (err) {
+      if (req.body.password)
+        req.body.password = 'DELETED'
+
+      if (req.body.confirmPassword)
+        req.body.confirmPassword = 'DELETED'
+
+      if (req.body['local.password'])
+        req.body['local.password'] = 'DELETED'
+
+      if (req.body.local && req.body.local.password)
+        req.body.local.password = 'DELETED'
+
       return next(err)
+    }
 
     if (req.body.remember) {
       if (config.remember.expires)

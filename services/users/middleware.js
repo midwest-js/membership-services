@@ -27,7 +27,18 @@ const mw = {
 
 function create(req, res, next) {
   User.create(req.body, (err, user) => {
-    if (err) return next(err)
+    if (err) {
+      if (req.body['local.password'])
+        req.body['local.password'] = 'DELETED'
+
+      if (req.body.local && req.body.local.password)
+        req.body.local.password = 'DELETED'
+
+      if (req.body.confirmPassword)
+        req.body.confirmPassword = 'DELETED'
+
+      return next(err)
+    }
 
     /* HTTP specification says Location header shoult be included when creating
      * a new entity with POST
@@ -150,23 +161,36 @@ function query(req, res, next) {
 }
 
 function register(req, res, next) {
+  function generateError(err) {
+    if (req.body['local.password'])
+      req.body['local.password'] = 'DELETED'
+
+    if (req.body.local && req.body.local.password)
+      req.body.local.password = 'DELETED'
+
+    if (req.body.confirmPassword)
+      req.body.confirmPassword = 'DELETED'
+
+    next(err)
+  }
+
   if (!req.body.email) {
     if (req.body.facebook && req.body.facebook.email)
       req.body.email = req.body.facebook.email
     else {
       const err = new Error(config.membership.messages.register.missingProperties)
       err.status = 422
-      return next(err)
+      return generateError(err)
     }
   }
 
   User.findOne({ email: req.body.email }, (err, user) => {
-    if (err) next(err)
+    if (err) return generateError(err)
 
     else if (user) {
       err = new Error(config.membership.messages.register.duplicateEmail)
       err.status = 409
-      next(err)
+      generateError(err)
     } else {
       req.body.email = req.body.email.toLowerCase()
 
@@ -175,7 +199,7 @@ function register(req, res, next) {
       if (!_.isEmpty(provider) && (!req.session.newUser || !_.isEqual(provider, _.pick(req.session.newUser, passport.providers)))) {
         err = new Error('The supplied user credentials does not match those retrieved from ' + _.keys(provider)[0] + '.')
         err.status = 400
-        return next(err)
+        return generateError(err)
       }
 
       delete req.session.newUser
@@ -183,12 +207,12 @@ function register(req, res, next) {
       const newUser = new User(req.body)
 
       getRoles(req, req.body.email, (err, roles, invite) => {
-        if (err) return next(err)
+        if (err) return generateError(err)
 
         if (!roles) {
           err = new Error(config.membership.messages.register.notAuthorized)
           err.status = 401
-          return next(err)
+          return generateError(err)
         }
 
         newUser.roles = roles
@@ -198,7 +222,7 @@ function register(req, res, next) {
           newUser.isVerified = true
 
         newUser.save((err) => {
-          if (err) return next(err)
+          if (err) return generateError(err)
 
           if (invite) {
             invite.dateConsumed = new Date()
@@ -213,7 +237,7 @@ function register(req, res, next) {
             }
           }
 
-          if (err) return next(err)
+          if (err) return generateError(err)
 
           res.status(201)
 
@@ -227,7 +251,7 @@ function register(req, res, next) {
                   html
                 }, (err) => {
                   // TODO handle error... should not be sent
-                  if (err) return next(err)
+                  if (err) return generateError(err)
 
                   respond()
                 })
@@ -244,7 +268,7 @@ function register(req, res, next) {
                 html
               }, (err) => {
                 // TODO handle error... should not be sent
-                if (err) return next(err)
+                if (err) return generateError(err)
 
                 respond()
               })
