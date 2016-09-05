@@ -57,9 +57,26 @@ function getActive(req, res, next) {
   })
 }
 
+function getByQuery(req, res, next) {
+  if (!req.query.code)
+    return next()
+
+  Invite.findById(req.query.code, (err, invite) => {
+    if (err) return next(err)
+
+    if (!invite || invite.email !== req.query.email || invite.dateConsumed)
+      return next()
+
+    res.status(200).locals.invite = invite
+
+    next()
+  })
+}
+
 module.exports = Object.assign(rest(Invite), {
   create,
   formatQuery: formatQuery([ 'limit', 'sort', 'page' ]),
   getActive,
+  getByQuery,
   paginate: paginate(Invite, 20),
 })
