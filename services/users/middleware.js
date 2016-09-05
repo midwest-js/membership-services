@@ -21,8 +21,8 @@ const providers = config.membership.providers || []
 const transport = nodemailer.createTransport(config.smtp)
 
 const mw = {
-  formatQuery: require('warepot/format-query'),
-  paginate: require('warepot/paginate')
+  formatQuery: require('midwest/middleware/format-query'),
+  paginate: require('midwest/middleware/paginate')
 }
 
 function create(req, res, next) {

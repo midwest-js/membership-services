@@ -5,8 +5,8 @@ const p = require('path')
 
 // modules > 3rd party
 const passport = require('passport')
-const redirect = require('warepot/redirect')
-const { register } = require('express-module-membership/services/users/middleware')
+const redirect = require('midwest/middleware/redirect')
+const { register } = require('../services/users/middleware')
 const router = new (require('express')).Router()
 
 

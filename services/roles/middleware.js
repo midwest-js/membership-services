@@ -1,8 +1,8 @@
 'use strict'
 
-const rest = require('warepot/rest')
-const formatQuery = require('warepot/format-query')
-const paginate = require('warepot/paginate')
+const rest = require('midwest/middleware/rest')
+const formatQuery = require('midwest/middleware/format-query')
+const paginate = require('midwest/middleware/paginate')
 
 const Role = require('./model')
 

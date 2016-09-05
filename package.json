@@ -24,6 +24,6 @@
     "passport-local": "^1.0.0",
     "require-dir": "^0.3.0",
     "validator": "^5.5.0",
-    "warepot": "0.0.4"
+    "midwest": "0.0.2"
   }
 }

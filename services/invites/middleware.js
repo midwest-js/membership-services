@@ -5,9 +5,9 @@ const url = require('url')
 const p = require('path')
 
 // modules > 3rd party
-const rest = require('warepot/rest')
-const formatQuery = require('warepot/format-query')
-const paginate = require('warepot/paginate')
+const rest = require('midwest/middleware/rest')
+const formatQuery = require('midwest/middleware/format-query')
+const paginate = require('midwest/middleware/paginate')
 const requireDir = require('require-dir')
 const nodemailer = require('nodemailer')
 
