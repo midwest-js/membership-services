@@ -61,7 +61,7 @@ UserSchema.methods.login = function () {
 }
 
 UserSchema.methods.generateVerificationCode = function () {
-  this.local.verificationCode = crypto.createHash('sha512').update(Date.now() + this.email).digest('hex')
+  this.local.verificationCode = crypto.randomBytes(64).toString('hex')
 
   // make sure no errors here
   this.save()
@@ -72,7 +72,7 @@ UserSchema.methods.resetPassword = function (next) {
     return false
 
   const date = Date.now()
-  const hash = crypto.createHash('sha512').update(date + this.local.password + this.email).digest('hex')
+  const hash = this.local.verificationCode = crypto.randomBytes(64).toString('hex')
 
   this.local.reset = {
     date,
