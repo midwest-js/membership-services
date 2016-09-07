@@ -357,26 +357,43 @@ function update(req, res, next) {
 }
 
 function updatePassword(req, res, next) {
+  // hide password in body
+  function sendError(err) {
+    if (req.body.password)
+      req.body.password = 'DELETED'
+
+    if (req.body.confirmPassword)
+      req.body.confirmPassword = 'DELETED'
+
+    next(err)
+  }
+
   if (!req.body.email || !req.body.password || !req.body.code) {
-    return next(new Error('Not enough parameters'))
+    const err = new Error('Not enough parameters')
+    err.status = 422
+    return sendError(err)
   }
 
   User.findOne({ email: req.body.email, 'local.reset.code': req.body.code }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
-      return next(_.extend(new Error('No user found'), {
-        status: 404,
-        details: _.omit(req.body.password)
+      return sendError(Object.assign(new Error('Incorrect reset code & email combination'), {
+        status: 403
       }))
     }
+
+    if (user.local.date > Date.now() + config.membership.timeouts.changePassword)
+      return sendError(Object.assign(new Error('Reset code expired'), {
+        status: 403
+      }))
 
     user.local.password = req.body.password
 
     user.local.reset = undefined
 
     user.save((err) => {
-      if (err) return next(err)
+      if (err) return sendError(err)
 
       res.status(200).json({ ok: true })
     })
