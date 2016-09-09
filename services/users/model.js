@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
     password: String,
     reset: {
       date: Date,
-      code: String
+      token: String
     },
     verificationCode: { type: String },
   },
@@ -67,16 +67,16 @@ UserSchema.methods.generateVerificationCode = function () {
   this.save()
 }
 
-UserSchema.methods.resetPassword = function (next) {
+UserSchema.methods.generatePasswordToken = function (next) {
   if (!this.local)
     return false
 
   const date = Date.now()
-  const hash = this.local.verificationCode = crypto.randomBytes(64).toString('hex')
+  const hash = crypto.randomBytes(64).toString('hex')
 
   this.local.reset = {
     date,
-    code: hash
+    token: hash
   }
 
   this.save((err) => {

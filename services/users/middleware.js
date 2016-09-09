@@ -19,7 +19,6 @@ const config = requireDir(p.join(process.cwd(), 'server/config'))
 const providers = config.membership.providers || []
 
 const transport = nodemailer.createTransport(config.smtp)
-
 const mw = {
   formatQuery: require('midwest/middleware/format-query'),
   paginate: require('midwest/middleware/paginate')
@@ -68,25 +67,69 @@ function getRoles(req, email, callback) {
   })
 }
 
-const resetPasswordTemplate = require('./reset-password-email.marko')
+const changePasswordTemplate = require('./change-password-email.marko')
 
 const verifyTemplate = require('./verify-email')
 const welcomeTemplate = require('./welcome-email')
 
-// middleware that checks if an email and reset code are valid
-function checkReset(req, res, next) {
-  User.findOne({ email: req.query.email, 'local.reset.code': req.query.code }, (err, user) => {
+function changePasswordWithToken(req, res, next) {
+  // hide password in body
+  function sendError(err) {
+    if (req.body.password)
+      req.body.password = 'DELETED'
+
+    if (req.body.confirmPassword)
+      req.body.confirmPassword = 'DELETED'
+
+    next(err)
+  }
+
+  if (!req.body.email || !req.body.password || !req.body.token) {
+    const err = new Error('Not enough parameters')
+    err.status = 422
+    return sendError(err)
+  }
+
+  User.findOne({ email: req.body.email, 'local.reset.token': req.body.token }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
-      err = new Error('Reset code not found for user.')
+      return sendError(Object.assign(new Error('Incorrect reset token & email combination'), {
+        status: 403
+      }))
+    }
+
+    if (user.local.date > Date.now() + config.membership.timeouts.changePassword)
+      return sendError(Object.assign(new Error('Token expired'), {
+        status: 403
+      }))
+
+    user.local.password = req.body.password
+
+    user.local.reset = undefined
+
+    user.save((err) => {
+      if (err) return sendError(err)
+
+      res.status(200).json({ ok: true })
+    })
+  })
+}
+
+// middleware that checks if an email and token are valid
+function checkPasswordToken(req, res, next) {
+  User.findOne({ email: req.query.email, 'local.reset.token': req.query.token }, (err, user) => {
+    if (err) return next(err)
+
+    if (!user) {
+      err = new Error('Token not found for user.')
       err.status = 404
       err.details = req.query
       return next(err)
     }
 
     if (user.local.reset.date.getTime() + (24 * 60 * 60 * 1000) < Date.now()) {
-      err = new Error('Reset code has expired.')
+      err = new Error('Token has expired.')
       err.status = 410
       err.details = req.query
       return next(err)
@@ -301,7 +344,7 @@ function remove(req, res, next) {
   })
 }
 
-function sendResetPasswordLink(req, res, next) {
+function sendChangePasswordLink(req, res, next) {
   User.findOne({ email: req.body.email }, function (err, user) {
     if (err) return next(err)
 
@@ -312,12 +355,12 @@ function sendResetPasswordLink(req, res, next) {
       return next(err)
     }
 
-    user.resetPassword((err) => {
+    user.generatePasswordToken((err) => {
       if (err) return next(err)
 
-      const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&code=' + user.local.reset.code
+      const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&token=' + user.local.reset.token
 
-      resetPasswordTemplate.render({ link }, (err, html) => {
+      changePasswordTemplate.render(Object.assign({ link }, { site: res.app.locals.site }), (err, html) => {
         if (err) next(err)
 
         transport.sendMail({
@@ -356,50 +399,6 @@ function update(req, res, next) {
   })
 }
 
-function updatePassword(req, res, next) {
-  // hide password in body
-  function sendError(err) {
-    if (req.body.password)
-      req.body.password = 'DELETED'
-
-    if (req.body.confirmPassword)
-      req.body.confirmPassword = 'DELETED'
-
-    next(err)
-  }
-
-  if (!req.body.email || !req.body.password || !req.body.code) {
-    const err = new Error('Not enough parameters')
-    err.status = 422
-    return sendError(err)
-  }
-
-  User.findOne({ email: req.body.email, 'local.reset.code': req.body.code }, (err, user) => {
-    if (err) return next(err)
-
-    if (!user) {
-      return sendError(Object.assign(new Error('Incorrect reset code & email combination'), {
-        status: 403
-      }))
-    }
-
-    if (user.local.date > Date.now() + config.membership.timeouts.changePassword)
-      return sendError(Object.assign(new Error('Reset code expired'), {
-        status: 403
-      }))
-
-    user.local.password = req.body.password
-
-    user.local.reset = undefined
-
-    user.save((err) => {
-      if (err) return sendError(err)
-
-      res.status(200).json({ ok: true })
-    })
-  })
-}
-
 // middleware that checks if an email and reset code are valid
 function verify(req, res, next) {
   User.findOne({ email: req.query.email, 'local.verificationCode': req.query.code }, (err, user) => {
@@ -430,7 +429,8 @@ function verify(req, res, next) {
 }
 
 module.exports = {
-  checkReset,
+  changePasswordWithToken,
+  checkPasswordToken,
   create,
   exists,
   findAll,
@@ -441,8 +441,7 @@ module.exports = {
   query,
   register,
   remove,
-  sendResetPasswordLink,
+  sendChangePasswordLink,
   update,
-  updatePassword,
   verify
 }
