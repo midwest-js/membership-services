@@ -301,7 +301,7 @@ function remove(req, res, next) {
   })
 }
 
-function resetPassword(req, res, next) {
+function sendResetPasswordLink(req, res, next) {
   User.findOne({ email: req.body.email }, function (err, user) {
     if (err) return next(err)
 
@@ -441,7 +441,7 @@ module.exports = {
   query,
   register,
   remove,
-  resetPassword,
+  sendResetPasswordLink,
   update,
   updatePassword,
   verify

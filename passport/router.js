@@ -6,7 +6,7 @@ const p = require('path')
 // modules > 3rd party
 const passport = require('passport')
 const redirect = require('midwest/middleware/redirect')
-const { register, resetPassword, updatePassword } = require('../services/users/middleware')
+const { register, sendResetPasswordLink, updatePassword } = require('../services/users/middleware')
 const router = new (require('express')).Router()
 
 
@@ -90,7 +90,7 @@ router
   .post('/local', mw.local)
   .get('/logout', mw.logout, redirect(config.redirects.logout))
   .post('/register', register)
-  .post('/forgot-password', resetPassword)
+  .post('/forgot-password', sendResetPasswordLink)
   .post('/change-password', updatePassword)
 
 module.exports = router
