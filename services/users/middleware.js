@@ -94,14 +94,14 @@ function changePasswordWithToken(req, res, next) {
     if (err) return next(err)
 
     if (!user) {
-      return sendError(Object.assign(new Error('Incorrect reset token & email combination'), {
-        status: 403
+      return sendError(Object.assign(new Error('Incorrect token and/or email'), {
+        status: 404
       }))
     }
 
-    if (user.local.date > Date.now() + config.membership.timeouts.changePassword)
+    if (Date.now() > user.local.date + config.membership.timeouts.changePassword)
       return sendError(Object.assign(new Error('Token expired'), {
-        status: 403
+        status: 410
       }))
 
     user.local.password = req.body.password
@@ -122,16 +122,14 @@ function checkPasswordToken(req, res, next) {
     if (err) return next(err)
 
     if (!user) {
-      err = new Error('Token not found for user.')
+      err = new Error('Token not found.')
       err.status = 404
-      err.details = req.query
       return next(err)
     }
 
     if (user.local.reset.date.getTime() + (24 * 60 * 60 * 1000) < Date.now()) {
       err = new Error('Token has expired.')
       err.status = 410
-      err.details = req.query
       return next(err)
     }
 
@@ -301,7 +299,7 @@ function register(req, res, next) {
               })
             })
           } else {
-            newUser.generateVerificationCode()
+            newUser.generateEmailToken()
 
             verifyTemplate.render({ user: newUser }, (err, html) => {
               transport.sendMail({
@@ -328,17 +326,9 @@ function remove(req, res, next) {
     if (err) return next(err)
 
     if (count > 0) {
-      res.statusCode = 200
-      res.message = {
-        type: 'success',
-        heading: 'The user has been removed.'
-      }
+      res.status(200)
     } else {
-      res.statusCode = 410
-      res.message = {
-        type: 'error',
-        heading: 'No user was found, thus none was removed.'
-      }
+      res.status(404)
     }
     return next()
   })
@@ -399,30 +389,33 @@ function update(req, res, next) {
   })
 }
 
-// middleware that checks if an email and reset code are valid
 function verify(req, res, next) {
-  User.findOne({ email: req.query.email, 'local.verificationCode': req.query.code }, (err, user) => {
+  User.findOne({ email: req.query.email, 'emailToken.token': req.query.token }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
-      err = new Error('Verification code not found for user.')
+      err = new Error('Incorrect token and/or email.')
       err.status = 404
-      err.details = req.query
       return next(err)
     }
 
-    if (user.dateCreated.getTime() + (24 * 60 * 60 * 1000) < Date.now()) {
-      err = new Error('Verification code has expired.')
+    if (Date.now() > user.emailToken.date + config.membership.timeouts.verifyEmail) {
+      err = new Error('Token has expired.')
       err.status = 410
-      err.details = req.query
       return next(err)
     }
 
     user.isVerified = true
-    delete user.local.verificationCode
+
+    if (user.emailToken.email)
+      user.email = user.emailToken.email
+
+    delete user.emailToken
+
     user.save(() => {
       req.login(user, () => {
-        res.redirect('/registered')
+        // TODO this should not redirect to the same page as register
+        res.redirect(config.membership.redirects.register)
       })
     })
   })

@@ -13,6 +13,15 @@ const config = require(p.join(process.cwd(), 'server/config/membership'))
 
 const providers = config.providers || []
 
+const EmailVerificationSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: [ isEmail, 'Not a valid email' ]
+  },
+})
+
 const UserSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -20,13 +29,20 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     validate: [ isEmail, 'Not a valid email' ]
   },
+  emailToken: {
+    email: {
+      type: String,
+      validate: [ isEmail, 'Not a valid email' ]
+    },
+    token: String,
+    date: Date
+  },
   local: {
     password: String,
     reset: {
       date: Date,
       token: String
-    },
-    verificationCode: { type: String },
+    }
   },
   givenName: String,
   familyName: String,
@@ -60,8 +76,12 @@ UserSchema.methods.login = function () {
   })
 }
 
-UserSchema.methods.generateVerificationCode = function () {
-  this.local.verificationCode = crypto.randomBytes(64).toString('hex')
+UserSchema.methods.generateEmailToken = function (email) {
+  this.emailToken = {
+    email: email,
+    token: crypto.randomBytes(64).toString('hex'),
+    date: Date.now()
+  }
 
   // make sure no errors here
   this.save()
@@ -71,12 +91,9 @@ UserSchema.methods.generatePasswordToken = function (next) {
   if (!this.local)
     return false
 
-  const date = Date.now()
-  const hash = crypto.randomBytes(64).toString('hex')
-
   this.local.reset = {
-    date,
-    token: hash
+    date: Date.now(),
+    token: crypto.randomBytes(64).toString('hex')
   }
 
   this.save((err) => {
