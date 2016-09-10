@@ -27,11 +27,8 @@ const mw = {
 function create(req, res, next) {
   User.create(req.body, (err, user) => {
     if (err) {
-      if (req.body['local.password'])
-        req.body['local.password'] = 'DELETED'
-
-      if (req.body.local && req.body.local.password)
-        req.body.local.password = 'DELETED'
+      if (req.body.password)
+        req.body.password = 'DELETED'
 
       if (req.body.confirmPassword)
         req.body.confirmPassword = 'DELETED'
@@ -90,7 +87,7 @@ function changePasswordWithToken(req, res, next) {
     return sendError(err)
   }
 
-  User.findOne({ email: req.body.email, 'local.reset.token': req.body.token }, (err, user) => {
+  User.findOne({ email: req.body.email, 'passwordToken.token': req.body.token }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
@@ -99,14 +96,14 @@ function changePasswordWithToken(req, res, next) {
       }))
     }
 
-    if (Date.now() > user.local.date + config.membership.timeouts.changePassword)
+    if (Date.now() > user.passwordToken.date + config.membership.timeouts.changePassword)
       return sendError(Object.assign(new Error('Token expired'), {
         status: 410
       }))
 
-    user.local.password = req.body.password
+    user.password = req.body.password
 
-    user.local.reset = undefined
+    user.passwordToken = undefined
 
     user.save((err) => {
       if (err) return sendError(err)
@@ -118,7 +115,7 @@ function changePasswordWithToken(req, res, next) {
 
 // middleware that checks if an email and token are valid
 function checkPasswordToken(req, res, next) {
-  User.findOne({ email: req.query.email, 'local.reset.token': req.query.token }, (err, user) => {
+  User.findOne({ email: req.query.email, 'passwordToken.token': req.query.token }, (err, user) => {
     if (err) return next(err)
 
     if (!user) {
@@ -127,7 +124,7 @@ function checkPasswordToken(req, res, next) {
       return next(err)
     }
 
-    if (user.local.reset.date.getTime() + (24 * 60 * 60 * 1000) < Date.now()) {
+    if (user.passwordToken.date.getTime() + (24 * 60 * 60 * 1000) < Date.now()) {
       err = new Error('Token has expired.')
       err.status = 410
       return next(err)
@@ -195,19 +192,16 @@ function query(req, res, next) {
   if (perPage)
     query.limit(perPage).skip(perPage * page)
 
-  query.exec((err, roles) => {
-    res.locals.roles = roles
+  query.exec((err, users) => {
+    res.locals.users = users
     next(err)
   })
 }
 
 function register(req, res, next) {
   function generateError(err) {
-    if (req.body['local.password'])
-      req.body['local.password'] = 'DELETED'
-
-    if (req.body.local && req.body.local.password)
-      req.body.local.password = 'DELETED'
+    if (req.body.password)
+      req.body.password = 'DELETED'
 
     if (req.body.confirmPassword)
       req.body.confirmPassword = 'DELETED'
@@ -348,7 +342,7 @@ function sendChangePasswordLink(req, res, next) {
     user.generatePasswordToken((err) => {
       if (err) return next(err)
 
-      const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&token=' + user.local.reset.token
+      const link = url.resolve(config.site.url, config.membership.paths.updatePassword) + '?email=' + encodeURI(user.email) + '&token=' + user.passwordToken.token
 
       changePasswordTemplate.render(Object.assign({ link }, { site: res.app.locals.site }), (err, html) => {
         if (err) next(err)
@@ -410,7 +404,7 @@ function verify(req, res, next) {
     if (user.emailToken.email)
       user.email = user.emailToken.email
 
-    delete user.emailToken
+    user.emailToken = undefined
 
     user.save(() => {
       req.login(user, () => {

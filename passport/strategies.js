@@ -19,7 +19,7 @@ function localCallback(email, password, done) {
     let message
 
     if (user) {
-      if (!user.local || !user.local.password) {
+      if (!user.password) {
         message = config.messages.login.notLocal
       } else if (!user.isVerified) {
         message = config.messages.login.unverified

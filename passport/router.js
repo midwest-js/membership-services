@@ -9,8 +9,6 @@ const redirect = require('midwest/middleware/redirect')
 const { register, sendChangePasswordLink, changePasswordWithToken } = require('../services/users/middleware')
 const router = new (require('express')).Router()
 
-console.log(sendChangePasswordLink)
-
 require('./setup')
 
 const config = require(p.join(process.cwd(), 'server/config/membership'))
@@ -34,12 +32,6 @@ function local(req, res, next) {
 
       if (req.body.confirmPassword)
         req.body.confirmPassword = 'DELETED'
-
-      if (req.body['local.password'])
-        req.body['local.password'] = 'DELETED'
-
-      if (req.body.local && req.body.local.password)
-        req.body.local.password = 'DELETED'
 
       return next(err)
     }

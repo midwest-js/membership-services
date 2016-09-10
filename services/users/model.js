@@ -11,16 +11,7 @@ const isEmail = require('validator/lib/isEmail')
 
 const config = require(p.join(process.cwd(), 'server/config/membership'))
 
-const providers = config.providers || []
-
-const EmailVerificationSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    validate: [ isEmail, 'Not a valid email' ]
-  },
-})
+const { saltLength, tokenLength, providers } = config
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -29,6 +20,7 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     validate: [ isEmail, 'Not a valid email' ]
   },
+  // used to verify new accounts and email changes
   emailToken: {
     email: {
       type: String,
@@ -37,29 +29,48 @@ const UserSchema = new mongoose.Schema({
     token: String,
     date: Date
   },
-  local: {
-    password: String,
-    reset: {
-      date: Date,
-      token: String
-    }
+  password: String,
+  // used to reset lost password
+  passwordToken: {
+    token: String,
+    date: Date
   },
-  givenName: String,
-  familyName: String,
-  roles: { type: [ { type: String } ], required: true, default: [ 'member' ] },
-  lastActivity: { type: Date },
-  lastLogin: { type: Date },
-  dateCreated: { type: Date, default: Date.now },
-  loginAttempts: { type: Number, default: 0 },
-  isActive: { type: Boolean, default: true },
-  isBanned: { type: Boolean, default: false },
-  isBlocked: { type: Boolean, default: false },
-  isVerified: { type: Boolean, default: false }
+  roles: {
+    type: [ { type: String } ],
+    required: true,
+    default: [ 'member' ]
+  },
+  lastActivity: Date,
+  lastLogin: Date,
+  dateCreated: {
+    type: Date,
+    default: Date.now
+  },
+  loginAttempts: {
+    type: Number,
+    default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  }
 })
 
 UserSchema.pre('validate', function (next) {
-  if (!_.has(this, ...providers) && !_.get(this, 'local.password'))
-    this.invalidate('local.password', 'Path `local.password` must be supplied if no social login')
+  if (providers && !_.has(this, ...Object.keys(providers)) && !_.get(this, 'password'))
+    this.invalidate('password', 'Path `password` must be supplied if no social login')
 
   next()
 })
@@ -67,8 +78,11 @@ UserSchema.pre('validate', function (next) {
 UserSchema.methods.login = function () {
   this.lastLogin = Date.now()
 
-  if (this.local.reset)
-    this.local.reset = undefined
+  if (this.passwordToken)
+    delete this.passwordToken
+
+  if (!this.loginAttempts)
+    this.loginAttempts = 0
 
   this.save((err) => {
     // TODO send error to error handler
@@ -79,21 +93,18 @@ UserSchema.methods.login = function () {
 UserSchema.methods.generateEmailToken = function (email) {
   this.emailToken = {
     email: email,
-    token: crypto.randomBytes(64).toString('hex'),
+    token: crypto.randomBytes(tokenLength / 2).toString('hex'),
     date: Date.now()
   }
 
-  // make sure no errors here
+  // TODO make sure no errors here
   this.save()
 }
 
 UserSchema.methods.generatePasswordToken = function (next) {
-  if (!this.local)
-    return false
-
-  this.local.reset = {
+  this.passwordToken = {
     date: Date.now(),
-    token: crypto.randomBytes(64).toString('hex')
+    token: crypto.randomBytes(tokenLength / 2).toString('hex')
   }
 
   this.save((err) => {
@@ -102,17 +113,13 @@ UserSchema.methods.generatePasswordToken = function (next) {
   })
 }
 
-const SALT_LENGTH = 16
-
-UserSchema.path('local.password').set((password) => {
-  // generate salt
+UserSchema.path('password').set((password) => {
   password = password.trim()
-  const chars = '0123456789abcdefghijklmnopqurstuvwxyz'
-  let salt = ''
-  for (let i = 0; i < SALT_LENGTH; i++) {
-    const j = Math.floor(Math.random() * chars.length)
-    salt += chars[j]
-  }
+
+  const salt = crypto.randomBytes(saltLength / 2).toString('hex')
+
+  console.log('salt', salt)
+  console.log('salt.length', salt.length)
 
   // hash the password
   const passwordHash = crypto.createHash('sha512').update(salt + password).digest('hex')
@@ -122,21 +129,22 @@ UserSchema.path('local.password').set((password) => {
 })
 
 UserSchema.methods.hasRole = function (role) {
-  return this.roles.indexOf(role) > -1
+  return this.roles.includes(role)
 }
 
 UserSchema.methods.authenticate = function (password) {
   password = password.trim()
-  const obj = detangle(this.local.password, password.length)
+
+  const obj = detangle(this.password, password.length)
 
   return crypto.createHash('sha512').update(obj.salt + password).digest('hex') === obj.hash
 }
 
+// mix salt and hashed password into a single string
 function entangle(string, salt, t) {
-  string = salt + string
-  const length = string.length
+  const arr = (salt + string).split('')
+  const length = arr.length
 
-  const arr = string.split('')
   for (let i = 0; i < salt.length; i++) {
     const num = ((i + 1) * t) % length
     const tmp = arr[i]
@@ -147,21 +155,23 @@ function entangle(string, salt, t) {
   return arr.join('')
 }
 
+// extract salt and hashed password from entangled string
 function detangle(string, t) {
-  const length = string.length
   const arr = string.split('')
+  const length = arr.length
 
-  for (let i = SALT_LENGTH - 1; i >= 0; i--) {
+  for (let i = saltLength - 1; i >= 0; i--) {
     const num = ((i + 1) * t) % length
     const tmp = arr[i]
     arr[i] = arr[num]
     arr[num] = tmp
   }
+
   const str = arr.join('')
 
   return {
-    salt: str.substring(0, SALT_LENGTH),
-    hash: str.substring(SALT_LENGTH)
+    salt: str.substring(0, saltLength),
+    hash: str.substring(saltLength)
   }
 }
 
