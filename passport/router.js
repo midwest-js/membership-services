@@ -54,10 +54,10 @@ function local(req, res, next) {
 
       res.format({
         html() {
-          res.redirect(req.session.lastPath || '/')
+          res.redirect(req.session.previousUrl || '/')
         },
         json() {
-          if (req.session.lastPath) res.set('Location', req.session.lastPath)
+          if (req.session.previousUrl) res.set('Location', req.session.previousUrl)
 
           res.json(user)
         }

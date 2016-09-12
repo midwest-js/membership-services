@@ -26,7 +26,7 @@ const redirectAuthenticated = function (url) {
 const redirectUnauthorized = function (url) {
   return function redirectUnauthorized(error, req, res, next) {
     if (error.status === 401 && !req.user && !req.xhr && req.accepts('html', 'json') === 'html') {
-      req.session.lastPath = req.path
+      req.session.previousUrl = req.originalUrl
       res.redirect(url)
     } else
       next(error)
