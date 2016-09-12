@@ -69,7 +69,7 @@ const UserSchema = new mongoose.Schema({
 })
 
 UserSchema.pre('validate', function (next) {
-  if (providers && !_.has(this, ...Object.keys(providers)) && !_.get(this, 'password'))
+  if ((!providers || !_.has(this, ...Object.keys(providers))) && !_.get(this, 'password'))
     this.invalidate('password', 'Path `password` must be supplied if no social login')
 
   next()
@@ -117,9 +117,6 @@ UserSchema.path('password').set((password) => {
   password = password.trim()
 
   const salt = crypto.randomBytes(saltLength / 2).toString('hex')
-
-  console.log('salt', salt)
-  console.log('salt.length', salt.length)
 
   // hash the password
   const passwordHash = crypto.createHash('sha512').update(salt + password).digest('hex')
