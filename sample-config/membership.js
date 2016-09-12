@@ -1,9 +1,6 @@
 'use strict'
 
-const p = require('path')
-
 const config = {
-  smtp: require('./smtp'),
   site: require('./site')
 }
 
@@ -13,11 +10,24 @@ module.exports = {
     subject: 'You have been invited to ' + config.site.title
   },
 
+  timeouts: {
+    // 1 day
+    changePassword: 24 * 60 * 60 * 1000,
+    // verify email
+    verifyEmail: 7 * 24 * 60 * 60 * 1000
+  },
+
   paths: {
     register: '/register',
     login: '/login',
     forgotPassword: '/forgot-password',
-    updatePassword: '/update-password'
+    updatePassword: '/change-password'
+  },
+
+  redirects: {
+    login: '/admin',
+    logout: '/',
+    register: '/admin'
   },
 
   remember: {
@@ -40,6 +50,7 @@ module.exports = {
     },
 
     register: {
+      missingProperties: 'Oh no missing stuff',
       notAuthorized: 'The email is not authorized to create an account.',
       duplicateEmail: 'The email has already been registered.'
     }
@@ -52,20 +63,18 @@ module.exports = {
 
     scope: [ 'email' ],
 
-    providers: {
-      facebook: {
-        clientID: 'change-this-fool',
-        clientSecret: 'change-this-fool',
-        callbackURL: p.join(config.site.domain, '/auth/facebook/callback'),
-        passReqToCallback: true
-      },
+    //providers: {
+    //  facebook: {
+    //    clientID: 'change-this-fool',
+    //    clientSecret: 'change-this-fool',
+    //    callbackURL: p.join(config.site.domain, '/auth/facebook/callback'),
+    //    passReqToCallback: true
+    //  },
 
-      google: {
-        clientID: 'change-this-fool',
-        clientSecret: 'change-this-fool',
-        callbackURL: p.join(config.site.domain, '/auth/google/callback'),
-        passReqToCallback: true
-      }
-    }
-  }
+  },
+
+  // needs to be even
+  tokenLength: 64,
+  // needs to be even
+  saltLength: 16
 }
