@@ -18,12 +18,12 @@
   "homepage": "https://github.com/thebitmill/midwest-module-membership#readme",
   "dependencies": {
     "lodash": "^4.15.0",
+    "midwest": "0.0.2",
     "mongoose": "^4.5.9",
     "nodemailer": "^2.5.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
     "require-dir": "^0.3.0",
-    "validator": "^5.5.0",
-    "midwest": "0.0.2"
+    "validator": "^5.7.0"
   }
 }

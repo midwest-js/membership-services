@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /* Middleware simply for simplying when in development
  * mode so that you do not have to re-login everytime the
@@ -6,22 +6,22 @@
  * to automatically login as.
  */
 
-const User = require('../services/users/model')
+const User = require('../services/users/model');
 
 module.exports = function automaticLogin(req, res, next) {
   if (ENV === 'development' && global.LOGIN_USER && !req.user) {
     User.findOne({ email: LOGIN_USER }, (err, user) => {
-      if (err) return next(err)
+      if (err) return next(err);
 
-      if (!user) return next()
+      if (!user) return next();
 
       req.login(user, (err) => {
-        if (err) return next(err)
+        if (err) return next(err);
 
-        next()
-      })
-    })
+        next();
+      });
+    });
   } else {
-    next()
+    next();
   }
-}
+};

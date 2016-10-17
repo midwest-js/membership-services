@@ -1,19 +1,19 @@
-'use strict'
+'use strict';
 
-const router = new (require('express')).Router()
+const router = new (require('express')).Router();
 
-const mw = require('./middleware')
+const mw = require('./middleware');
 
-const { isAdmin } = require('../../passport/authorization-middleware')
+const { isAdmin } = require('../../passport/authorization-middleware');
 
 router.route('/')
   .get(isAdmin, mw.formatQuery, mw.paginate, mw.query)
-  .post(isAdmin, mw.create)
+  .post(isAdmin, mw.create);
 
 router.route('/:id')
   .get(isAdmin, mw.findById)
   .patch(isAdmin, mw.update)
   .put(isAdmin, mw.replace)
-  .delete(isAdmin, mw.remove)
+  .delete(isAdmin, mw.remove);
 
-module.exports = router
+module.exports = router;
