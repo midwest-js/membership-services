@@ -69,10 +69,10 @@ function getRoles(req, email, callback) {
   });
 }
 
-const changePasswordTemplate = require('./change-password-email.marko');
+const changePasswordTemplate = require('./change-password-email.jsx');
 
-const verifyTemplate = require('./verify-email.marko');
-const welcomeTemplate = require('./welcome-email.marko');
+const verifyTemplate = require('./verify-email.jsx');
+const welcomeTemplate = require('./welcome-email.jsx');
 
 function changePasswordWithToken(req, res, next) {
   // hide password in body
@@ -298,35 +298,35 @@ function register(req, res, next) {
 
           if (newUser.isVerified) {
             req.login(newUser, () => {
-              welcomeTemplate.render({ user: newUser }, (err, html) => {
-                transport.sendMail({
-                  from: `${config.site.title} <${config.site.emails.robot}>`,
-                  to: newUser.email,
-                  subject: `Welcome to ${config.site.title}!`,
-                  html,
-                }, (err) => {
-                  // TODO handle error... should not be sent
-                  if (err) return generateError(err);
-
-                  respond();
-                });
-              });
-            });
-          } else {
-            newUser.generateEmailToken();
-
-            verifyTemplate.render({ user: newUser }, (err, html) => {
               transport.sendMail({
                 from: `${config.site.title} <${config.site.emails.robot}>`,
                 to: newUser.email,
-                subject: `Verify ${config.site.title} account`,
-                html,
+                subject: `Welcome to ${config.site.title}!`,
+                html: welcomeTemplate({ site: config.site, user: newUser.toJSON() }),
               }, (err) => {
                 // TODO handle error... should not be sent
                 if (err) return generateError(err);
 
                 respond();
               });
+            });
+          } else {
+            newUser.generateEmailToken();
+
+            const token = newUser.emailToken;
+
+            const link = `${url.resolve(config.site.url, config.membership.paths.verifyEmail)}?email=${token.email}&token=${token.token}`;
+
+            transport.sendMail({
+              from: `${config.site.title} <${config.site.emails.robot}>`,
+              to: newUser.email,
+              subject: `Verify ${config.site.title} account`,
+              html: verifyTemplate({ site: config.site, user: newUser.toJSON(), link }),
+            }, (err) => {
+              // TODO handle error... should not be sent
+              if (err) return generateError(err);
+
+              respond();
             });
           }
         });
@@ -364,21 +364,17 @@ function sendChangePasswordLink(req, res, next) {
 
       const link = `${url.resolve(config.site.url, config.membership.paths.updatePassword)}?email=${encodeURI(user.email)}&token=${user.passwordToken.token}`;
 
-      changePasswordTemplate.render(Object.assign({ link }, {
-        site: res.app.locals.site,
-      }), (err, html) => {
-        if (err) next(err);
+      transport.sendMail({
+        from: `${config.site.title} <${config.site.emails.robot}>`,
+        to: user.email,
+        subject: `Reset ${config.site.title} password`,
+        html: changePasswordTemplate(Object.assign({ link }, {
+          site: res.app.locals.site,
+        })),
+      }, () => {
+      // TODO handle error... should not be sent
 
-        transport.sendMail({
-          from: `${config.site.title} <${config.site.emails.robot}>`,
-          to: user.email,
-          subject: `Reset ${config.site.title} password`,
-          html,
-        }, () => {
-        // TODO handle error... should not be sent
-
-          res.status(200).json({ ok: true });
-        });
+        res.status(200).json({ ok: true });
       });
     });
   });
