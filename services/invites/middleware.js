@@ -13,7 +13,7 @@ const nodemailer = require('nodemailer');
 
 // modules > local
 const Invite = require('./model');
-const template = require('./email.marko');
+const template = require('./email.jsx');
 
 const config = requireDir(p.join(process.cwd(), 'server/config'));
 
@@ -28,23 +28,19 @@ function create(req, res, next) {
   Invite.create(req.body, (err, invite) => {
     if (err) return next(err);
 
-    const link = `${url.resolve(config.site.url, config.membership.paths.register)}?email=${invite.email}&code=${invite._id}`;
+    const link = `${url.resolve(config.site.url, config.membership.paths.register)}?email=${invite.email}&token=${invite._id}`;
 
-    template.render({ site: config.site, invite, link }, (err, html) => {
+    smtpTransport.sendMail({
+      from: config.membership.invite.from,
+      to: req.body.email,
+      subject: config.membership.invite.subject,
+      html: template({ site: config.site, invite, link }),
+    }, (err) => {
       if (err) return next(err);
 
-      smtpTransport.sendMail({
-        from: config.membership.invite.from,
-        to: req.body.email,
-        subject: config.membership.invite.subject,
-        html,
-      }, (err) => {
-        if (err) return next(err);
+      res.status(201).locals.invite = invite;
 
-        res.status(201).locals.invite = invite;
-
-        return next();
-      });
+      return next();
     });
   });
 }
@@ -58,11 +54,11 @@ function getActive(req, res, next) {
 }
 
 function getByQuery(req, res, next) {
-  if (!req.query.code) {
+  if (!req.query.token) {
     return next();
   }
 
-  Invite.findById(req.query.code, (err, invite) => {
+  Invite.findById(req.query.token, (err, invite) => {
     if (err) {
       return next(err);
     }
