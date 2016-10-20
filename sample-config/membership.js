@@ -22,6 +22,7 @@ module.exports = {
     login: '/login',
     forgotPassword: '/forgot-password',
     updatePassword: '/change-password',
+    verifyEmail: '/verify-email',
   },
 
   redirects: {
