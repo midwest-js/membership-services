@@ -17,8 +17,8 @@ PermissionSchema.statics.findMatches = function (email, cb) {
   });
 };
 
-PermissionSchema.path('regex').set((regex) => {
-  return regex instanceof RegExp ? regex : new RegExp(regex);
-});
+PermissionSchema.path('regex').set((regex) => (
+  regex instanceof RegExp ? regex : new RegExp(regex)
+));
 
 module.exports = mongoose.model('Permission', PermissionSchema);
