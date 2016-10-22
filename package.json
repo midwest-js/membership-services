@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint passport service sample-config",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run lint",
+    "preversion": "npm run lint"
   },
   "repository": {
     "type": "git",
@@ -25,5 +28,9 @@
     "passport-local": "^1.0.0",
     "require-dir": "^0.3.0",
     "validator": "^5.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb-base": "^9.0.0"
   }
 }
