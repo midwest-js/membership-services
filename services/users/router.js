@@ -21,7 +21,7 @@ router.route('/me')
   .patch(isAuthenticated, mw.getCurrent);
 
 router.route('/:id')
-  .get(isAdmin, mw.findOne)
+  .get(isAdmin, mw.findById)
   .put(isAdmin, mw.update)
   .patch(isAdmin, mw.update)
   .delete(isAdmin, mw.remove);

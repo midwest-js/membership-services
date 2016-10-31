@@ -1,8 +1,8 @@
 'use strict';
 
-const rest = require('midwest/middleware/rest');
-const formatQuery = require('midwest/middleware/format-query');
-const paginate = require('midwest/middleware/paginate');
+const rest = require('midwest/factories/rest');
+const formatQuery = require('midwest/factories/format-query');
+const paginate = require('midwest/factories/paginate');
 
 const Role = require('./model');
 

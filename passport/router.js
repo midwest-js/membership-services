@@ -5,7 +5,7 @@ const p = require('path');
 
 // modules > 3rd party
 const passport = require('passport');
-const redirect = require('midwest/middleware/redirect');
+const redirect = require('midwest/factories/redirect');
 const { register, sendChangePasswordLink, changePasswordWithToken } = require('../services/users/middleware');
 const router = new (require('express')).Router();
 

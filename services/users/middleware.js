@@ -19,10 +19,10 @@ const config = requireDir(p.join(process.cwd(), 'server/config'));
 const providers = config.membership.providers || [];
 
 const transport = nodemailer.createTransport(config.smtp);
-const mw = {
-  formatQuery: require('midwest/middleware/format-query'),
-  paginate: require('midwest/middleware/paginate'),
-};
+
+const formatQuery = require('midwest/factories/format-query');
+const paginate = require('midwest/factories/paginate');
+const rest = require('midwest/factories/rest');
 
 function create(req, res, next) {
   User.create(req.body, (err, user) => {
@@ -162,51 +162,10 @@ function exists(property) {
   };
 }
 
-function findOne(req, res, next) {
-  if (req.params.id === 'me') {
-    return next();
-  }
-
-  User.findById(req.params.id).lean().exec((err, user) => {
-    if (err) return next(err);
-
-    res.locals.user = _.omit(user, ['local', 'facebook']);
-    next();
-  });
-}
-
-function findAll(req, res, next) {
-  User.find(req.query, (err, users) => {
-    if (err) return next(err);
-
-    res.locals.users = users;
-
-    return next();
-  });
-}
-
 function getCurrent(req, res, next) {
   res.locals.user = req.user && _.omit(req.user.toJSON(), ['local', 'facebook']);
 
   next();
-}
-
-function query(req, res, next) {
-  const page = Math.max(0, req.query.page) || 0;
-  const perPage = Math.max(0, req.query.limit) || res.locals.perPage;
-
-  const query = User.find(_.omit(req.query, 'limit', 'sort', 'page'),
-    null,
-    { sort: req.query.sort || 'name', lean: true });
-
-  if (perPage) {
-    query.limit(perPage).skip(perPage * page);
-  }
-
-  query.exec((err, users) => {
-    res.locals.users = users;
-    next(err);
-  });
 }
 
 function register(req, res, next) {
@@ -335,19 +294,6 @@ function register(req, res, next) {
   });
 }
 
-function remove(req, res, next) {
-  User.remove({ _id: req.params.id }, (err, count) => {
-    if (err) return next(err);
-
-    if (count > 0) {
-      res.status(200);
-    } else {
-      res.status(404);
-    }
-    return next();
-  });
-}
-
 function sendChangePasswordLink(req, res, next) {
   User.findOne({ email: req.body.email }, (err, user) => {
     if (err) return next(err);
@@ -434,20 +380,16 @@ function verify(req, res, next) {
   });
 }
 
-module.exports = {
+module.exports = Object.assign(rest(User), {
   changePasswordWithToken,
   checkPasswordToken,
   create,
   exists,
-  findAll,
-  findOne,
-  formatQuery: mw.formatQuery(['limit', 'sort', 'page']),
+  formatQuery: formatQuery(['limit', 'sort', 'page']),
   getCurrent,
-  paginate: mw.paginate(User, 20),
-  query,
+  paginate: paginate(User, 20),
   register,
-  remove,
   sendChangePasswordLink,
   update,
   verify,
-};
+});
