@@ -232,7 +232,7 @@ function register(req, res, next) {
 
         // TEMP
         if (invite || !_.isEmpty(provider)) {
-          newUser.isVerified = true;
+          newUser.isEmailVerified = true;
         }
 
         newUser.save((err) => {
@@ -255,7 +255,7 @@ function register(req, res, next) {
 
           res.status(201);
 
-          if (newUser.isVerified) {
+          if (newUser.isEmailVerified) {
             req.login(newUser, () => {
               transport.sendMail({
                 from: `${config.site.title} <${config.site.emails.robot}>`,
@@ -363,7 +363,7 @@ function verify(req, res, next) {
       return next(err);
     }
 
-    user.isVerified = true;
+    user.isEmailVerified = true;
 
     if (user.emailToken.email) {
       user.email = user.emailToken.email;
