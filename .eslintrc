@@ -29,6 +29,7 @@
 
   "globals": {
     "ENV": true,
+    "PWD": true,
     "LOGIN_USER": true
   }
 }
