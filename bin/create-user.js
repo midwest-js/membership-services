@@ -9,44 +9,43 @@ const p = require('path');
 const crypto = require('crypto');
 
 const chalk = require('chalk');
+const _ = require('lodash');
 
 const mongoose = require('mongoose');
 
 const config = require(p.join(PWD, 'server/config/membership'));
+const mongoConfig = require(p.join(PWD, 'server/config/mongo'));
 
 const User = require('../services/users/model');
 
-// mpromise (built in mongoose promise library) is deprecated,
-// tell mongoose to use native Promises instead
-mongoose.Promise = Promise;
-// connect to mongodb
-mongoose.connect(config.mongo.uri, _.omit(config.mongo, 'uri'), (err) => {
-  if (err) {
-    console.error(err);
-    process.exit();
-  }
+const successPrefix = `[${chalk.green('SUCCESS')}]`;
+const errorPrefix = `[${chalk.red('ERROR')}]`;
 
-  console.info(`[${chalk.cyan('INIT')}] Mongoose is connected.`);
+function parseUrlEncoded(str) {
+  return str && str.split('&').reduce((result, split) => {
+    const [key, value] = split.split('=');
 
-  createUser(...process.argv.slice(2));
-});
+    if (value) {
+      result[key] = value;
+    }
 
-const successPrefix = `[${chalk.green('SUCCESS')}] `;
-const errorPrefix = `[${chalk.red('ERROR')}] `;
+    return result;
+  }, {})
+}
 
-function createUser(email, password, roles) {
+function createUser(email, password, roles, urlEncoded) {
   if (!email || !password) {
     console.log('Usage: bin/create-user.js [email] [password] [?roles]');
     process.exit(1);
   }
 
 
-  const user = new User({
+  const user = new User(Object.assign({
     email,
     password,
     roles: roles ? roles.split(',') : ['admin'],
     isEmailVerified: true,
-  });
+  }, parseUrlEncoded(urlEncoded)));
 
   user.save((err) => {
     if (err) {
@@ -54,8 +53,24 @@ function createUser(email, password, roles) {
       console.error(err);
       process.exit(1);
     } else {
-      console.info(`${successPrefix}Saved user: ${user.ops[0].email}`);
+      console.info(`${successPrefix} User ${chalk.bold.blue(user.email)} has been created.`);
       process.exit(0);
     }
   });
 }
+
+// mpromise (built in mongoose promise library) is deprecated,
+// tell mongoose to use native Promises instead
+mongoose.Promise = Promise;
+// connect to mongodb
+mongoose.connect(mongoConfig.uri, _.omit(mongoConfig, 'uri'), (err) => {
+  if (err) {
+    console.error(`${errorPrefix} Mongoose connection error:`);
+    console.error(err);
+    process.exit();
+  }
+
+
+  createUser(...process.argv.slice(2));
+});
+

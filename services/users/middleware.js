@@ -332,6 +332,7 @@ function update(req, res, next) {
       req.body.email = req.body.email.toLowerCase().trim();
     }
 
+    console.log('req.body', req.body);
     _.extend(user, _.omit(req.body, ['_id', '__v', 'local', 'facebook']));
 
     user.save((err) => {
@@ -340,8 +341,9 @@ function update(req, res, next) {
       }
 
       res.status(201);
-      res.locals.user = _.omit(req.user.toJSON(), ['local', 'facebook']);
+      res.locals.user = _.omit(user.toJSON(), ['local', 'facebook']);
 
+      console.log(res.locals.user);
       return next();
     });
   });
@@ -385,7 +387,10 @@ module.exports = Object.assign(rest(User), {
   checkPasswordToken,
   create,
   exists,
-  formatQuery: formatQuery(['limit', 'sort', 'page']),
+  formatQuery: formatQuery(['limit', 'sort', 'page', 'isBanned', 'isBlocked', 'isMuted', 'isVerified'], {
+    givenName: 'regex',
+    familyName: 'regex',
+  }),
   getCurrent,
   paginate: paginate(User, 20),
   register,
