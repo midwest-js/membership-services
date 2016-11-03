@@ -13,7 +13,7 @@ const config = require(p.join(process.cwd(), 'server/config/membership'));
 
 const { saltLength, tokenLength, providers } = config;
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema(Object.assign({
   email: {
     type: String,
     required: true,
@@ -66,7 +66,7 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-});
+}, config.userSchema));
 
 UserSchema.pre('validate', function (next) {
   if ((!providers || !_.has(this, ...Object.keys(providers))) && !_.get(this, 'password')) {
