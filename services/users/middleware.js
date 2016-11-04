@@ -387,7 +387,8 @@ module.exports = Object.assign(rest(User), {
   checkPasswordToken,
   create,
   exists,
-  formatQuery: formatQuery(['limit', 'sort', 'page', 'isBanned', 'isBlocked', 'isMuted', 'isVerified'], {
+  formatQuery: formatQuery(['limit', 'sort', 'page', 'isBanned', 'isBlocked', 'isMuted', 'isVerified', 'isEmailVerified'], {
+    username: 'regex',
     givenName: 'regex',
     familyName: 'regex',
   }),
