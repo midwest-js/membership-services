@@ -22,7 +22,7 @@ function localCallback(email, password, done) {
     if (user) {
       if (!user.password) {
         message = config.messages.login.notLocal;
-      } else if (!user.isVerified) {
+      } else if (!user.isEmailVerified) {
         message = config.messages.login.unverified;
       } else if (user.isBlocked) {
         message = config.messages.login.blocked;
