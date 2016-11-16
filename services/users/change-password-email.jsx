@@ -1,4 +1,4 @@
-module.exports = (props) => {
+module.exports = (props) => (
   <table align="center" width="600">
     <tr>
       <td style="text-align: center; font-family: Arial, sans-serif;" valign="top">
@@ -15,4 +15,4 @@ module.exports = (props) => {
       </td>
     </tr>
   </table>
-}
+);
