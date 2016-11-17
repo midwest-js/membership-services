@@ -162,6 +162,15 @@ function exists(property) {
   };
 }
 
+function findById(req, res, next) {
+  User.findById(req.params.id).populate('publishers').lean().exec((err, user) => {
+    if (err) return next(err);
+
+    res.locals.user = user;
+    next();
+  });
+}
+
 function getCurrent(req, res, next) {
   res.locals.user = req.user && _.omit(req.user.toJSON(), ['local', 'facebook']);
 
@@ -332,7 +341,7 @@ function update(req, res, next) {
       req.body.email = req.body.email.toLowerCase().trim();
     }
 
-    _.extend(user, _.omit(req.body, ['_id', '__v', 'local', 'facebook']));
+    Object.assign(user, _.omit(req.body, ['_id', '__v', 'facebook', 'password']));
 
     user.save((err) => {
       if (err) {
@@ -385,6 +394,7 @@ module.exports = Object.assign(rest(User), {
   checkPasswordToken,
   create,
   exists,
+  findById,
   formatQuery: formatQuery(['limit', 'sort', 'page', 'isBanned', 'isBlocked', 'isMuted', 'isVerified', 'isEmailVerified'], {
     username: 'regex',
     givenName: 'regex',

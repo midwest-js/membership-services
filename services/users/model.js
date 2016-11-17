@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema(Object.assign({
   emailToken: {
     email: {
       type: String,
-      validate: [isEmail, 'Not a valid email'],
+      // validate: [isEmail, 'Not a valid email'],
     },
     token: String,
     date: Date,
