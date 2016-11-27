@@ -8,13 +8,16 @@ global.ENV = process.env.NODE_ENV || 'development';
 const p = require('path');
 const crypto = require('crypto');
 
-const chalk = require('chalk');
+require('app-module-path').addPath(p.join(PWD, 'node_modules'));
+
 const _ = require('lodash');
+const chalk = require('chalk');
+const pg = require('pg');
 
-const mongoose = require('mongoose');
-
+const postgresConfig = require(p.join(PWD, 'server/config/postgres'));
 const config = require(p.join(PWD, 'server/config/membership'));
-const mongoConfig = require(p.join(PWD, 'server/config/mongo'));
+
+const client = new pg.Client(postgresConfig);
 
 const User = require('../services/users/model');
 
@@ -33,44 +36,40 @@ function parseUrlEncoded(str) {
   }, {})
 }
 
+const { hashPassword } = require('../services/users/helpers');
+
 function createUser(email, password, roles, urlEncoded) {
   if (!email || !password) {
     console.log('Usage: bin/create-user.js [email] [password] [?roles]');
     process.exit(1);
   }
 
+  password = hashPassword(password);
+  console.log(password)
+  console.log(password.length);
 
-  const user = new User(Object.assign({
-    email,
-    password,
-    roles: roles ? roles.split(',') : ['admin'],
-    isEmailVerified: true,
-  }, parseUrlEncoded(urlEncoded)));
+  client.connect((err) => {
+    client.find(`INSERT INTO users (given_name, family_name, email, password, is_email_verified) VALUES ('Linus', 'Miller', '${email}', '${password}', true) RETURNING id`, (err, result) => {
+      if (err) return console.log(err);
 
-  user.save((err) => {
-    if (err) {
-      console.error(errorPrefix);
-      console.error(err);
-      process.exit(1);
-    } else {
-      console.info(`${successPrefix} User ${chalk.bold.blue(user.email)} has been created.`);
-      process.exit(0);
-    }
-  });
+      console.log(`${successPrefix}Created user ${chalk.bold.blue(user)}`);
+
+      const userId = result.rows[0].id;
+
+      client.end();
+    });
+
+  })
 }
 
-// mpromise (built in mongoose promise library) is deprecated,
-// tell mongoose to use native Promises instead
-mongoose.Promise = Promise;
-// connect to mongodb
-mongoose.connect(mongoConfig.uri, _.omit(mongoConfig, 'uri'), (err) => {
-  if (err) {
-    console.error(`${errorPrefix} Mongoose connection error:`);
-    console.error(err);
-    process.exit();
-  }
+const queries = require('../services/users/queries');
 
-
-  createUser(...process.argv.slice(2));
-});
-
+client.connect((err) => {
+  client.find(queries.findById, [4], (err, result) => {
+    console.log(err);
+    console.log(result);
+    // console.log(Array.isArray(result.rows[0].roles));
+    client.end();
+  })
+})
+// createUser(...process.argv.slice(2));

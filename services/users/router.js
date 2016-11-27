@@ -13,7 +13,7 @@ router.param('id', (req, res, next, id) => {
 });
 
 router.route('/')
-  .get(isAdmin, mw.formatQuery, mw.query)
+  .get(isAdmin, mw.formatQuery, mw.find)
   .post(isAdmin, mw.create);
 
 router.route('/me')

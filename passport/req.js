@@ -10,12 +10,14 @@ const _ = require('lodash');
 
 const reqProto = require('http').IncomingMessage.prototype;
 
+const { login } = require('../services/users/helpers');
+
 reqProto.hasRoles = function (roles) {
   if (!_.isArray(roles)) {
     roles = [roles];
   }
 
-  return this.isAuthenticated() && roles.every(this.user.hasRole.bind(this.user));
+  return this.isAuthenticated() && _.union(this.user.roles, roles).length > 0;
 };
 
 reqProto.isAdmin = function () {
@@ -25,7 +27,7 @@ reqProto.isAdmin = function () {
 reqProto.originalLogin = reqProto.login;
 
 reqProto.login = function (user, ...args) {
-  user.login();
+  login(user);
 
   if (this.session && this.session.newUser) {
     delete this.session.newUser;

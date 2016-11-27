@@ -51,8 +51,7 @@ function local(req, res, next) {
     req.login(user, (err) => {
       if (err) return next(err);
 
-      user = user.toObject();
-      delete user.local;
+      delete user.password;
 
       res.status(200);
 

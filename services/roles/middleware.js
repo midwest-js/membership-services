@@ -1,12 +1,12 @@
 'use strict';
 
-const rest = require('midwest/factories/rest');
+const factory = require('midwest/factories/rest');
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 
-const Role = require('./model');
+const handlers = require('./handlers');
 
-module.exports = Object.assign(rest(Role), {
+module.exports = Object.assign(factory('roles', null, handlers), {
   formatQuery: formatQuery(['limit', 'sort', 'page']),
-  paginate: paginate(Role, 20),
+  paginate: paginate(handlers.count, 20),
 });

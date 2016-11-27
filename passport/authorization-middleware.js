@@ -45,7 +45,7 @@ const isCurrent = function (req, res, next) {
 
 const hasRole = function (role) {
   return function (req, res, next) {
-    if (req.isAuthenticated() && req.user.hasRole(role)) {
+    if (req.isAuthenticated() && req.user.roles.includes(role)) {
       return next();
     }
     return returnError(req, res, next);

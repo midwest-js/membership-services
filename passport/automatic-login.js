@@ -6,11 +6,11 @@
  * to automatically login as.
  */
 
-const User = require('../services/users/model');
+const { getAuthenticationDetails } = require('../services/users/handlers');
 
 module.exports = function automaticLogin(req, res, next) {
-  if (ENV === 'development' && global.LOGIN_USER && !req.user) {
-    User.findOne({ email: LOGIN_USER }, (err, user) => {
+  if (global.LOGIN_USER && !req.user) {
+    getAuthenticationDetails(LOGIN_USER, (err, user) => {
       if (err) return next(err);
 
       if (!user) return next();

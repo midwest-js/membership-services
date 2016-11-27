@@ -2,9 +2,10 @@
 
 const p = require('path');
 
+const _ = require('lodash');
 const passport = require('passport');
 
-const User = require('../services/users/model');
+// const User = require('../services/users/model');
 
 const config = require(p.join(process.cwd(), 'server/config/membership'));
 
@@ -28,14 +29,15 @@ if (typeof config.deserializeUser === 'function') {
 }
 // used to serialize the user for the session
 passport.serializeUser(serializeUser || ((user, done) => {
-  done(null, user.id);
+  done(null, _.pick(user, ['id', 'username', 'email', 'roles']));
 }));
 
 // used to deserialize the user
 passport.deserializeUser(deserializeUser || ((user, done) => {
-  User.findById(user, (err, user) => {
-    done(err, user);
-  });
+  done(null, user);
+  // User.findById(user, (err, user) => {
+  //   done(err, user);
+  // });
 }));
 
 require('./req');

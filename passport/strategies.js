@@ -9,10 +9,11 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const config = require(p.join(process.cwd(), 'server/config/membership'));
 
-const User = require('../services/users/model');
+const { getAuthenticationDetails } = require('../services/users/handlers');
+const { authenticate } = require('../services/users/helpers');
 
 function localCallback(email, password, done) {
-  User.findOne({ email: email.toLowerCase() }, (err, user) => {
+  getAuthenticationDetails(email.toLowerCase(), (err, user) => {
     if (err) {
       return done(err);
     }
@@ -22,13 +23,13 @@ function localCallback(email, password, done) {
     if (user) {
       if (!user.password) {
         message = config.messages.login.notLocal;
-      } else if (!user.isEmailVerified) {
+      } else if (!user.date_email_verified) {
         message = config.messages.login.unverified;
-      } else if (user.isBlocked) {
+      } else if (user.date_blocked) {
         message = config.messages.login.blocked;
-      } else if (user.isBanned) {
+      } else if (user.date_banned) {
         message = config.messages.login.banned;
-      } else if (!user.authenticate(password)) {
+      } else if (!authenticate(password, user.password)) {
         message = config.messages.login.wrongPassword;
       }
     } else {

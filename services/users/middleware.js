@@ -10,11 +10,6 @@ const requireDir = require('require-dir');
 const nodemailer = require('nodemailer');
 const passport = require('passport');
 
-// models
-const User = require('./model');
-const Permission = require('../permissions/model');
-const Invite = require('../invites/model');
-
 const config = requireDir(p.join(process.cwd(), 'server/config'));
 const providers = config.membership.providers || [];
 
@@ -22,10 +17,17 @@ const transport = nodemailer.createTransport(config.smtp);
 
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
-const rest = require('midwest/factories/rest');
+const factory = require('midwest/factories/rest');
+
+const handlers = {
+  invites: require('../invites/handlers'),
+  permissions: require('../permissions/handlers'),
+  roles: require('../roles/handlers'),
+  users: require('./handlers'),
+};
 
 function create(req, res, next) {
-  User.create(req.body, (err, user) => {
+  handlers.create(req.body, (err, user) => {
     if (err) {
       if (req.body.password) {
         req.body.password = 'DELETED';
@@ -50,12 +52,12 @@ function create(req, res, next) {
 }
 
 function getRoles(req, email, callback) {
-  Invite.findOne({ email }, (err, invite) => {
+  handlers.invites.findOne({ email }, (err, invite) => {
     if (err) return callback(err);
 
     let roles = invite ? invite.roles : [];
 
-    Permission.findMatches(email, (err, permissions) => {
+    handlers.permissions.findMatches(email, (err, permissions) => {
       if (err) {
         callback(err);
       }
@@ -123,7 +125,7 @@ function changePasswordWithToken(req, res, next) {
 
 // middleware that checks if an email and token are valid
 function checkPasswordToken(req, res, next) {
-  User.findOne({ email: req.query.email, 'passwordToken.token': req.query.token }, (err, user) => {
+  User.findOne({ email: req.find.email, 'passwordToken.token': req.find.token }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -145,19 +147,19 @@ function checkPasswordToken(req, res, next) {
 function exists(property) {
   return (req, res, next) => {
     // TODO maybe return true?
-    if (!req.query[property]) {
+    if (!req.find[property]) {
       return res.json(false);
     }
 
     const query = {
-      [property]: req.query[property],
+      [property]: req.find[property],
     };
 
-    User.findOne(query, (err, user) => {
+    handlers.users.count(query, (err, count) => {
       if (err) return next(err);
 
       // return true if user is found
-      return res.json(!!user);
+      return res.json(count > 0);
     });
   };
 }
@@ -348,7 +350,7 @@ function update(req, res, next) {
 }
 
 function verify(req, res, next) {
-  User.findOne({ email: req.query.email, 'emailToken.token': req.query.token }, (err, user) => {
+  User.findOne({ email: req.find.email, 'emailToken.token': req.find.token }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -380,7 +382,7 @@ function verify(req, res, next) {
   });
 }
 
-module.exports = Object.assign(rest(User), {
+module.exports = Object.assign(factory('users'), {
   changePasswordWithToken,
   checkPasswordToken,
   create,
@@ -391,7 +393,7 @@ module.exports = Object.assign(rest(User), {
     familyName: 'regex',
   }),
   getCurrent,
-  paginate: paginate(User, 20),
+  paginate: paginate('users', 20),
   register,
   sendChangePasswordLink,
   update,
