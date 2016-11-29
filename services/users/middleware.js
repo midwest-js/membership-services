@@ -13,11 +13,13 @@ const passport = require('passport');
 const config = requireDir(p.join(process.cwd(), 'server/config'));
 const providers = config.membership.providers || [];
 
-const transport = nodemailer.createTransport(config.smtp);
-
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const factory = require('midwest/factories/rest');
+
+const { generateToken } = require('./helpers');
+
+const transport = nodemailer.createTransport(config.smtp);
 
 const handlers = {
   invites: require('../invites/handlers'),
@@ -52,8 +54,10 @@ function create(req, res, next) {
 }
 
 function getRoles(req, email, callback) {
-  handlers.invites.findOne({ email }, (err, invite) => {
+  handlers.invites.findByEmail(email, (err, invite) => {
     if (err) return callback(err);
+
+    console.log(invite);
 
     let roles = invite ? invite.roles : [];
 
@@ -193,10 +197,10 @@ function register(req, res, next) {
     }
   }
 
-  User.findOne({ email: req.body.email }, (err, user) => {
+  handlers.users.count({ email: req.body.email }, (err, count) => {
     if (err) return generateError(err);
 
-    else if (user) {
+    if (count) {
       err = new Error(config.membership.messages.register.duplicateEmail);
       err.status = 409;
       generateError(err);
@@ -217,7 +221,7 @@ function register(req, res, next) {
 
       delete req.session.newUser;
 
-      const newUser = new User(req.body);
+      const newUser = _.cloneDeep(req.body);
 
       getRoles(req, req.body.email, (err, roles, invite) => {
         if (err) {
@@ -234,20 +238,21 @@ function register(req, res, next) {
 
         // TEMP
         if (invite || !_.isEmpty(provider)) {
-          newUser.isEmailVerified = true;
+          newUser.dateEmailVerified = new Date();
         }
 
-        newUser.save((err) => {
+        handlers.users.create(newUser, (err, result) => {
           if (err) return generateError(err);
 
           if (invite) {
-            invite.dateConsumed = new Date();
-            invite.save();
+            handlers.invites.consume(invite.id, (err) => {
+              if (err) console.log(err);
+            });
           }
 
           function respond() {
-            if (req.xhr) {
-              res.status(201).json(_.omit(newUser.toJSON(), 'local', ...providers));
+            if (req.accepts(['json', '*/*'] === 'json')) {
+              res.status(201).json(_.omit(newUser, 'password', ...providers));
             } else {
               res.redirect(config.membership.redirects.register);
             }
@@ -257,13 +262,13 @@ function register(req, res, next) {
 
           res.status(201);
 
-          if (newUser.isEmailVerified) {
+          if (!result.token) {
             req.login(newUser, () => {
               transport.sendMail({
                 from: `${config.site.title} <${config.site.emails.robot}>`,
                 to: newUser.email,
                 subject: `Welcome to ${config.site.title}!`,
-                html: welcomeTemplate({ site: config.site, user: newUser.toJSON() }),
+                html: welcomeTemplate({ site: config.site, user: newUser }),
               }, (err) => {
                 // TODO handle error... should not be sent
                 if (err) return generateError(err);
@@ -272,17 +277,13 @@ function register(req, res, next) {
               });
             });
           } else {
-            newUser.generateEmailToken();
-
-            const token = newUser.emailToken;
-
-            const link = `${url.resolve(config.site.url, config.membership.paths.verifyEmail)}?email=${token.email}&token=${token.token}`;
+            const link = `${url.resolve(config.site.url, config.membership.paths.verifyEmail)}?email=${newUser.email}&token=${result.token}`;
 
             transport.sendMail({
               from: `${config.site.title} <${config.site.emails.robot}>`,
               to: newUser.email,
               subject: `Verify ${config.site.title} account`,
-              html: verifyTemplate({ site: config.site, user: newUser.toJSON(), link }),
+              html: verifyTemplate({ site: config.site, user: newUser, link }),
             }, (err) => {
               // TODO handle error... should not be sent
               if (err) return generateError(err);
@@ -307,6 +308,8 @@ function sendChangePasswordLink(req, res, next) {
       return next(err);
     }
 
+    handlers.emailTokens.create(
+    )
     user.generatePasswordToken((err) => {
       if (err) return next(err);
 
@@ -350,7 +353,7 @@ function update(req, res, next) {
 }
 
 function verify(req, res, next) {
-  User.findOne({ email: req.find.email, 'emailToken.token': req.find.token }, (err, user) => {
+  handlers.users.findOne({ email: req.find.email, 'emailToken.token': req.find.token }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -382,7 +385,7 @@ function verify(req, res, next) {
   });
 }
 
-module.exports = Object.assign(factory('users'), {
+module.exports = Object.assign(factory('users', null, handlers.users), {
   changePasswordWithToken,
   checkPasswordToken,
   create,
@@ -393,7 +396,7 @@ module.exports = Object.assign(factory('users'), {
     familyName: 'regex',
   }),
   getCurrent,
-  paginate: paginate('users', 20),
+  paginate: paginate(handlers.users.count, 20),
   register,
   sendChangePasswordLink,
   update,

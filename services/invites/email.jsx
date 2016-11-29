@@ -2,7 +2,7 @@ module.exports = (props = {}) => (
   <table align="center" width="600">
     <tr>
       <td style="text-align: center; font-family: Arial, sans-serif;" valign="top">
-        <h1>Hello! You have been invited to {props.site.title} by {props.invite.inviter.email}</h1>
+        <h1>Hello! You have been invited to {props.site.title} by {props.inviter}</h1>
         <p>Follow the link below to redeem your new account!</p>
 
         <p><a href={props.link}>{props.link}</a></p>

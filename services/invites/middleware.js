@@ -6,6 +6,17 @@ const paginate = require('midwest/factories/paginate');
 
 const handlers = require('./handlers');
 
+const mw = factory('invites', null, handlers);
+
+function create(req, res, next) {
+  Object.assign(req.body, {
+    createdByEmail: req.user.email,
+    createdById: req.user.id,
+  });
+
+  mw.create(req, res, next);
+}
+
 function getActive(req, res, next) {
   handlers.find({ active: true }, (err, invites) => {
     if (err) return next(err);
@@ -16,18 +27,18 @@ function getActive(req, res, next) {
   });
 }
 
-function getByQuery(req, res, next) {
-  if (!req.find.token) {
+function findByTokenAndEmail(req, res, next) {
+  if (!req.query.token) {
     return next();
   }
 
-  handlers.findById(req.find.token, (err, invite) => {
-    if (err) {
-      return next(err);
+  handlers.findByTokenAndEmail(req.query.token, req.query.email, (err, invite) => {
+    if (!invite) {
+      return next(new Error('No invite found'));
     }
 
-    if (!invite || invite.email !== req.find.email || invite.dateConsumed) {
-      return next();
+    if (invite.dateConsumed) {
+      return next(new Error('Invite already consumed'));
     }
 
     res.status(200).locals.invite = invite;
@@ -36,9 +47,10 @@ function getByQuery(req, res, next) {
   });
 }
 
-module.exports = Object.assign(factory('invites', null, handlers), {
+module.exports = Object.assign({}, mw, {
+  create,
   getActive,
-  getByQuery,
+  findByTokenAndEmail,
   formatQuery: formatQuery(['limit', 'sort', 'page']),
   paginate: paginate(handlers.count, 20),
 });

@@ -27,6 +27,7 @@ reqProto.isAdmin = function () {
 reqProto.originalLogin = reqProto.login;
 
 reqProto.login = function (user, ...args) {
+  console.log(user);
   login(user);
 
   if (this.session && this.session.newUser) {

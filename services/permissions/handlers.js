@@ -2,7 +2,9 @@
 
 const factory = require('midwest/factories/handlers');
 
-const handlers = factory('permissions');
+const columns = ['id', 'regex', 'dateCreated', 'createdById', 'dateModified'];
+
+const handlers = factory('permissions', columns);
 
 function findMatches(email, cb) {
   handlers.getAll((err, permissions) => {

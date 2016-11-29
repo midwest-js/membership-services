@@ -23,6 +23,12 @@ function generatePasswordToken() {
   };
 }
 
+function generateToken(email, length) {
+  length = (length || tokenLength) / 2;
+
+  return crypto.randomBytes(tokenLength / 2).toString('hex');
+}
+
 function generateEmailToken(email) {
   return {
     email,
@@ -96,6 +102,7 @@ module.exports = {
   authenticate,
   generateEmailToken,
   generatePasswordToken,
+  generateToken,
   hashPassword,
   login,
 };

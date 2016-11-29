@@ -2,4 +2,6 @@
 
 const factory = require('midwest/factories/handlers');
 
-module.exports = factory('roles');
+const columns = ['id', 'name', 'dateCreated', 'createdById', 'dateModified'];
+
+module.exports = factory('roles', columns);
