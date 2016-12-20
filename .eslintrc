@@ -15,6 +15,7 @@
     "arrow-parens": [2, "always"],
     "consistent-return": 0,
     "func-names": 0,
+    "import/no-dynamic-require": 0,
     "import/no-unresolved": [2, { "ignore": ["^[^./]"] }],
     "global-require": 0,
     "no-cond-assign": 0,
