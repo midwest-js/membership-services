@@ -5,34 +5,34 @@
 -- Dumped from database version 9.6.1
 -- Dumped by pg_dump version 9.6.1
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SET check_function_bodies = false;
-SET client_min_messages = warning;
-SET row_security = off;
+-- SET statement_timeout = 0;
+-- SET lock_timeout = 0;
+-- SET idle_in_transaction_session_timeout = 0;
+-- SET client_encoding = 'UTF8';
+-- SET standard_conforming_strings = on;
+-- SET check_function_bodies = false;
+-- SET client_min_messages = warning;
+-- SET row_security = off;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+-- CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
 
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+-- COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
-SET search_path = public, pg_catalog;
+-- SET search_path = public, pg_catalog;
 
-SET default_tablespace = '';
+-- SET default_tablespace = '';
 
-SET default_with_oids = false;
+-- SET default_with_oids = false;
 
 --
 -- Name: email_tokens; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
@@ -49,8 +49,6 @@ CREATE TABLE email_tokens (
 );
 
 
-ALTER TABLE email_tokens OWNER TO millerkonsult_supreme;
-
 --
 -- Name: email_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -61,9 +59,6 @@ CREATE SEQUENCE email_tokens_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE email_tokens_id_seq OWNER TO millerkonsult_supreme;
 
 --
 -- Name: email_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
@@ -81,9 +76,6 @@ CREATE TABLE invite_roles (
     role_id integer NOT NULL
 );
 
-
-ALTER TABLE invite_roles OWNER TO millerkonsult_supreme;
-
 --
 -- Name: invites; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -98,9 +90,6 @@ CREATE TABLE invites (
     token text NOT NULL
 );
 
-
-ALTER TABLE invites OWNER TO millerkonsult_supreme;
-
 --
 -- Name: invites_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -111,9 +100,6 @@ CREATE SEQUENCE invites_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE invites_id_seq OWNER TO millerkonsult_supreme;
 
 --
 -- Name: invites_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
@@ -135,9 +121,6 @@ CREATE TABLE password_tokens (
     date_consumed timestamp with time zone
 );
 
-
-ALTER TABLE password_tokens OWNER TO millerkonsult_supreme;
-
 --
 -- Name: password_tokens_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -148,9 +131,6 @@ CREATE SEQUENCE password_tokens_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE password_tokens_id_seq OWNER TO millerkonsult_supreme;
 
 --
 -- Name: password_tokens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
@@ -168,9 +148,6 @@ CREATE TABLE permission_roles (
     role_id integer NOT NULL
 );
 
-
-ALTER TABLE permission_roles OWNER TO millerkonsult_supreme;
-
 --
 -- Name: permissions; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -183,9 +160,6 @@ CREATE TABLE permissions (
     date_modified timestamp with time zone
 );
 
-
-ALTER TABLE permissions OWNER TO millerkonsult_supreme;
-
 --
 -- Name: permissions_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -197,52 +171,11 @@ CREATE SEQUENCE permissions_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
-ALTER TABLE permissions_id_seq OWNER TO millerkonsult_supreme;
-
 --
 -- Name: permissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
 --
 
 ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
-
-
---
--- Name: publishers; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
---
-
-CREATE TABLE publishers (
-    id integer NOT NULL,
-    name character varying(64) NOT NULL,
-    legal_name character varying(64),
-    url character varying(128) NOT NULL,
-    date_created timestamp with time zone DEFAULT now() NOT NULL,
-    created_by_id integer NOT NULL,
-    date_modified timestamp with time zone
-);
-
-
-ALTER TABLE publishers OWNER TO millerkonsult_supreme;
-
---
--- Name: publishers_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
---
-
-CREATE SEQUENCE publishers_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE publishers_id_seq OWNER TO millerkonsult_supreme;
-
---
--- Name: publishers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER SEQUENCE publishers_id_seq OWNED BY publishers.id;
 
 
 --
@@ -253,12 +186,9 @@ CREATE TABLE roles (
     id integer NOT NULL,
     name character varying(64) NOT NULL,
     date_created timestamp with time zone DEFAULT now() NOT NULL,
-    created_by_id integer NOT NULL,
+    created_by_id integer,
     date_modified timestamp with time zone
 );
-
-
-ALTER TABLE roles OWNER TO millerkonsult_supreme;
 
 --
 -- Name: roles_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
@@ -270,9 +200,6 @@ CREATE SEQUENCE roles_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE roles_id_seq OWNER TO millerkonsult_supreme;
 
 --
 -- Name: roles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
@@ -289,9 +216,6 @@ CREATE TABLE user_roles (
     user_id integer NOT NULL,
     role_id integer NOT NULL
 );
-
-
-ALTER TABLE user_roles OWNER TO millerkonsult_supreme;
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
@@ -318,9 +242,6 @@ CREATE TABLE users (
     date_email_verified timestamp with time zone
 );
 
-
-ALTER TABLE users OWNER TO millerkonsult_supreme;
-
 --
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
@@ -331,9 +252,6 @@ CREATE SEQUENCE users_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
-
-ALTER TABLE users_id_seq OWNER TO millerkonsult_supreme;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
@@ -368,13 +286,6 @@ ALTER TABLE ONLY password_tokens ALTER COLUMN id SET DEFAULT nextval('password_t
 --
 
 ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
-
-
---
--- Name: publishers id; Type: DEFAULT; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER TABLE ONLY publishers ALTER COLUMN id SET DEFAULT nextval('publishers_id_seq'::regclass);
 
 
 --
@@ -452,22 +363,6 @@ ALTER TABLE ONLY permission_roles
 
 ALTER TABLE ONLY permissions
     ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
-
-
---
--- Name: publishers publishers_pkey; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER TABLE ONLY publishers
-    ADD CONSTRAINT publishers_pkey PRIMARY KEY (id);
-
-
---
--- Name: publishers publishers_url_key; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER TABLE ONLY publishers
-    ADD CONSTRAINT publishers_url_key UNIQUE (url);
 
 
 --
@@ -578,14 +473,6 @@ ALTER TABLE ONLY permission_roles
 
 ALTER TABLE ONLY permissions
     ADD CONSTRAINT permissions_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
-
-
---
--- Name: publishers publishers_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER TABLE ONLY publishers
-    ADD CONSTRAINT publishers_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
