@@ -30,7 +30,7 @@ function createRoles(roles) {
     if (err) throw err;
 
     roleNames.forEach((role) => {
-      client.find(`INSERT INTO roles (name) VALUES ('${role}')`, (err) => {
+      client.query(`INSERT INTO roles (name) VALUES ('${role}')`, (err) => {
         if (err) throw err;
 
         console.log(`${successPrefix}Created role ${chalk.bold.blue(role)}`);

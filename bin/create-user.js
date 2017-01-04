@@ -19,8 +19,6 @@ const config = require(p.join(PWD, 'server/config/membership'));
 
 const client = new pg.Client(postgresConfig);
 
-const User = require('../services/users/model');
-
 const successPrefix = `[${chalk.green('SUCCESS')}]`;
 const errorPrefix = `[${chalk.red('ERROR')}]`;
 
@@ -49,10 +47,10 @@ function createUser(email, password, roles, urlEncoded) {
   console.log(password.length);
 
   client.connect((err) => {
-    client.find(`INSERT INTO users (given_name, family_name, email, password, is_email_verified) VALUES ('Linus', 'Miller', '${email}', '${password}', true) RETURNING id`, (err, result) => {
+    client.query(`INSERT INTO users (given_name, family_name, email, password, date_email_verified) VALUES ('Linus', 'Miller', '${email}', '${password}', NOW()) RETURNING id`, (err, result) => {
       if (err) return console.log(err);
 
-      console.log(`${successPrefix}Created user ${chalk.bold.blue(user)}`);
+      console.log(`${successPrefix}Created user ${chalk.bold.blue(result.rows[0].email)}`);
 
       const userId = result.rows[0].id;
 
@@ -64,12 +62,12 @@ function createUser(email, password, roles, urlEncoded) {
 
 const queries = require('../services/users/queries');
 
-client.connect((err) => {
-  client.find(queries.findById, [4], (err, result) => {
-    console.log(err);
-    console.log(result);
-    // console.log(Array.isArray(result.rows[0].roles));
-    client.end();
-  })
-})
-// createUser(...process.argv.slice(2));
+// client.connect((err) => {
+//   client.query(queries.findById, [4], (err, result) => {
+//     console.log(err);
+//     console.log(result);
+//     // console.log(Array.isArray(result.rows[0].roles));
+//     client.end();
+//   })
+// })
+createUser(...process.argv.slice(2));
