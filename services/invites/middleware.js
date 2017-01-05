@@ -6,7 +6,10 @@ const paginate = require('midwest/factories/paginate');
 
 const handlers = require('./handlers');
 
-const mw = factory('invites', null, handlers);
+const mw = factory({
+  plural: 'invites',
+  handlers: handlers,
+});
 
 function create(req, res, next) {
   Object.assign(req.body, {

@@ -6,7 +6,10 @@ const paginate = require('midwest/factories/paginate');
 
 const handlers = require('./handlers');
 
-module.exports = Object.assign(factory('roles', null, handlers), {
+module.exports = Object.assign(factory({
+  plural: 'roles',
+  handlers: handlers,
+}), {
   formatQuery: formatQuery(['limit', 'sort', 'page']),
   paginate: paginate(handlers.count, 20),
 });

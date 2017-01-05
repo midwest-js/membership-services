@@ -385,7 +385,10 @@ function verify(req, res, next) {
   });
 }
 
-module.exports = Object.assign(factory('users', null, handlers.users), {
+module.exports = Object.assign(factory({
+  plural: 'users',
+  handlers: handlers.users,
+}), {
   changePasswordWithToken,
   checkPasswordToken,
   create,

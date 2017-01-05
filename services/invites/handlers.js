@@ -94,7 +94,11 @@ function consume(id, cb) {
   });
 }
 
-module.exports = Object.assign(factory('invites', columns, ['create', 'getAll', 'find']), {
+module.exports = Object.assign(factory({
+  table: 'invites',
+  columns: columns,
+  exclude: ['create', 'getAll', 'find'],
+}), {
   create,
   find,
   findByEmail,

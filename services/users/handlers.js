@@ -13,7 +13,11 @@ const queries = require('./queries');
 const columns = ['id', 'email', 'dateCreated'];
 
 const handlers = {
-  users: factory('users', columns, ['create']),
+  users: factory({
+    table: 'users',
+    columns: columns,
+    exclude: ['create'],
+  }),
   emailTokens: require('../email-tokens/handlers'),
 };
 
