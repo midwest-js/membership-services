@@ -331,26 +331,26 @@ function sendChangePasswordLink(req, res, next) {
   });
 }
 
-function update(req, res, next) {
-  User.findById(req.params.id, (err, user) => {
-    if (req.body.email) {
-      req.body.email = req.body.email.toLowerCase().trim();
-    }
+// function update(req, res, next) {
+//   User.findById(req.params.id, (err, user) => {
+//     if (req.body.email) {
+//       req.body.email = req.body.email.toLowerCase().trim();
+//     }
 
-    _.extend(user, _.omit(req.body, ['_id', '__v', 'local', 'facebook']));
+//     _.extend(user, _.omit(req.body, ['_id', '__v', 'local', 'facebook']));
 
-    user.save((err) => {
-      if (err) {
-        return next(err);
-      }
+//     user.save((err) => {
+//       if (err) {
+//         return next(err);
+//       }
 
-      res.status(201);
-      res.locals.user = _.omit(user.toJSON(), ['local', 'facebook']);
+//       res.status(201);
+//       res.locals.user = _.omit(user.toJSON(), ['local', 'facebook']);
 
-      return next();
-    });
-  });
-}
+//       return next();
+//     });
+//   });
+// }
 
 function verify(req, res, next) {
   handlers.users.findOne({ email: req.find.email, 'emailToken.token': req.find.token }, (err, user) => {
@@ -402,6 +402,5 @@ module.exports = Object.assign(factory({
   paginate: paginate(handlers.users.count, 20),
   register,
   sendChangePasswordLink,
-  update,
   verify,
 });

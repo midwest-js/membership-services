@@ -6,11 +6,17 @@ const _ = require('lodash');
 
 const factory = require('midwest/factories/handlers');
 
-const db = require(p.join(PWD, 'server/db'));
+const db = require(p.join(process.cwd(), 'server/db'));
+const config = require(p.join(process.cwd(), 'server/config/membership'));
 
 const queries = require('./queries');
 
 const columns = ['id', 'email', 'dateCreated'];
+
+
+if (config.userColumns) {
+  columns.push(...config.userColumns);
+}
 
 const handlers = {
   users: factory({

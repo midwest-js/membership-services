@@ -60,6 +60,14 @@ function find(json, cb) {
   });
 }
 
+function findById(id, cb) {
+  db.query(queries.findById, [id], (err, result) => {
+    if (err) return cb(err);
+
+    cb(null, result.rows[0]);
+  });
+}
+
 function findByEmail(email, cb) {
   db.query(queries.findByEmail, [email], (err, result) => {
     if (err) return cb(err);
@@ -97,11 +105,12 @@ function consume(id, cb) {
 module.exports = Object.assign(factory({
   table: 'invites',
   columns: columns,
-  exclude: ['create', 'getAll', 'find'],
+  exclude: ['create', 'getAll', 'find', 'findById'],
 }), {
   create,
   find,
   findByEmail,
+  findById,
   findByTokenAndEmail,
   getAll,
   consume,

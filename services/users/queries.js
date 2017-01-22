@@ -1,7 +1,20 @@
 'use strict';
 
+const p = require('path');
+
+const config = require(p.join(process.cwd(), 'server/config/membership'));
+
+// const defaultColumns = ['id', 'email', 'username', 'roles'];
+// const defaultSerializeColumns = [...defaultColumns, 'dateBanned', 'dateBlocked', 'dateEmailVerified']
+const { columns } = require('midwest/util/sql');
+
+const serializeColumns = config.serializeColumns && columns(config.serializeColumns, 'users');
+const userColumns = config.userColumns && columns(config.userColumns, 'users');
+
+const queries = config.queries || {};
+
 module.exports = {
-  create: `
+  create: queries.create || `
     WITH last_user AS (
       INSERT INTO users (given_name, family_name, email, password, date_email_verified)
         VALUES ($1, $2, $3, $4, NOW()) RETURNING id
@@ -11,22 +24,28 @@ module.exports = {
 
     SELECT id FROM last_user;
   `,
-  getAll: `
+  getAll: queries.getAll || `
     SELECT users.email, array_agg(roles.name) as roles
+      ${userColumns ? `, ${userColumns}` : ''}
       FROM users, user_roles, roles
       WHERE users.id = user_roles.user_id
       AND user_roles.role_id = roles.id
       GROUP BY users.email;
     `,
-  findById: `
-    SELECT users.email, array_agg(roles.name) as roles
+  findById: queries.findById || `
+    SELECT
+        users.email,
+        array_agg(roles.name) as roles
+        users.date_verified as "dateVerified",
+        users.family_name as "familyName",
+        users.given_name as "givenName"
       FROM users, user_roles, roles
       WHERE users.id = user_roles.user_id
-      AND user_roles.role_id = roles.id
-      AND users.id = $1
+        AND user_roles.role_id = roles.id
+        AND users.id = $1
       GROUP BY users.email;
     `,
-  findByEmail: `
+  findByEmail: queries.findByEmail || `
     SELECT users.email, array_agg(roles.name) as roles
       FROM users, user_roles, roles
       WHERE users.id = user_roles.user_id
@@ -34,13 +53,20 @@ module.exports = {
       AND users.email = $1
       GROUP BY users.email;
     `,
-  getAuthenticationDetails: `
-    SELECT id, email, password, date_email_verified, date_banned, date_blocked,
+  getAuthenticationDetails: queries.getAuthenticationDetails || `
+    SELECT
+        id,
+        email,
+        password,
+        date_email_verified as "dateEmailVerified",
+        date_banned as "dateBanned",
+        date_blocked as "dateBlocked",
         array(SELECT name FROM user_roles LEFT OUTER JOIN roles ON user_roles.role_id = roles.id WHERE user_roles.user_id = users.id) as roles
+        ${serializeColumns ? `, ${serializeColumns}` : ''}
       FROM users 
       WHERE email = $1;
     `,
-  login: `
+  login: queries.login || `
     UPDATE users SET last_login = NOW()
       WHERE email = $1;
     `,
