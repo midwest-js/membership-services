@@ -56,7 +56,7 @@ function find(json, cb) {
   db.query(queries.find, [page * 20], (err, result) => {
     if (err) return cb(err);
 
-    cb(null, result.rowCount ? result.rows : undefined);
+    cb(null, result.rows);
   });
 }
 
