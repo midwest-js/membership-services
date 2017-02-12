@@ -29,7 +29,7 @@ const handlers = {
 };
 
 function create(req, res, next) {
-  handlers.create(req.body, (err, user) => {
+  handlers.users.create(req.body, (err, user) => {
     if (err) {
       if (req.body.password) {
         req.body.password = 'DELETED';

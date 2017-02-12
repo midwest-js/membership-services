@@ -25,17 +25,37 @@ module.exports = {
     SELECT id FROM last_user;
   `,
   getAll: queries.getAll || `
-    SELECT users.email, array_agg(roles.name) as roles
+    SELECT users.email,
+      (SELECT array_to_json(array_agg(row_to_json(d)))
+        FROM (
+          SELECT id, name FROM roles
+            INNER JOIN user_roles ON user_roles.role_id = roles.id
+          WHERE user_roles.role_id = users.id
+          ORDER BY name ASC
+        ) d
+      ) as roles
       ${userColumns ? `, ${userColumns}` : ''}
-      FROM users, user_roles, roles
-      WHERE users.id = user_roles.user_id
-      AND user_roles.role_id = roles.id
-      GROUP BY users.email;
+      FROM users;
     `,
+  // getAll: queries.getAll || `
+  //   SELECT users.email, array_agg(roles.name) as roles
+  //     ${userColumns ? `, ${userColumns}` : ''}
+  //     FROM users, user_roles, roles
+  //     WHERE users.id = user_roles.user_id
+  //     AND user_roles.role_id = roles.id
+  //     GROUP BY users.email;
+  //   `,
   findById: queries.findById || `
     SELECT
         users.email,
-        array_agg(roles.name) as roles
+        (SELECT array_to_json(array_agg(row_to_json(d)))
+          FROM (
+            SELECT id, name FROM roles
+              INNER JOIN user_roles ON user_roles.role_id = roles.id
+            WHERE user_roles.role_id = users.id
+            ORDER BY name ASC
+          ) d
+        ) as roles,
         users.date_verified as "dateVerified",
         users.family_name as "familyName",
         users.given_name as "givenName"
