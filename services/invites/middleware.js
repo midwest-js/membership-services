@@ -13,7 +13,6 @@ const mw = factory({
 
 function create(req, res, next) {
   Object.assign(req.body, {
-    createdByEmail: req.user.email,
     createdById: req.user.id,
   });
 
