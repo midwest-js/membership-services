@@ -45,7 +45,7 @@ function create(json, cb) {
     }, (err) => {
       if (err) return cb(err);
 
-      return cb(null, result.rows[0].id);
+      return cb(null, result.rows[0]);
     });
   });
 }
