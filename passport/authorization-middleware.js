@@ -35,6 +35,17 @@ const redirectUnauthorized = function (url) {
   };
 };
 
+const redirectAuthorized = function (authorizationMiddleware, url) {
+  return function redirectAuthorized(req, res, next) {
+    authorizationMiddleware(req, res, (err) => {
+      if (!err) return res.redirect(url);
+
+      next();
+    });
+  };
+};
+
+
 const isCurrent = function (req, res, next) {
   if (req.user && req.params.id === req.user._id.toString()) {
     next();
@@ -59,6 +70,7 @@ module.exports = {
   isCurrent,
   redirectAuthenticated,
   redirectUnauthorized,
+  redirectAuthorized,
   hasRole,
   isAdmin,
 };
