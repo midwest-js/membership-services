@@ -23,11 +23,11 @@ function localCallback(email, password, done) {
     if (user) {
       if (!user.password) {
         message = config.messages.login.notLocal;
-      } else if (!user.date_email_verified) {
-        message = config.messages.login.unverified;
-      } else if (user.date_blocked) {
+      } else if (!user.dateEmailVerified) {
+        message = config.messages.login.emailNotUnverified;
+      } else if (user.dateBlocked) {
         message = config.messages.login.blocked;
-      } else if (user.date_banned) {
+      } else if (user.dateBanned) {
         message = config.messages.login.banned;
       } else if (!authenticate(password, user.password)) {
         message = config.messages.login.wrongPassword;
