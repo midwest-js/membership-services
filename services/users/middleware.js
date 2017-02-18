@@ -75,10 +75,10 @@ function getRoles(req, email, callback) {
   });
 }
 
-const changePasswordTemplate = require('./change-password-email.jsx');
+const changePasswordTemplate = require('./change-password-email');
 
-const verifyTemplate = require('./verify-email.jsx');
-const welcomeTemplate = require('./welcome-email.jsx');
+const verifyTemplate = require('./verify-email');
+const welcomeTemplate = require('./welcome-email');
 
 function changePasswordWithToken(req, res, next) {
   // hide password in body

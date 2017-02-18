@@ -27,7 +27,7 @@ const columns = ['id', 'email', 'dateCreated', 'createdById', 'dateModified', 'd
 
 const transport = nodemailer.createTransport(config.smtp);
 
-const template = require('./email.jsx');
+const template = require('./email');
 
 function create(json, cb) {
   const token = generateToken();

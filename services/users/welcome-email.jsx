@@ -1,3 +1,7 @@
+'use strict';
+
+const { h } = require('jsx-node');
+
 module.exports = ({ site, user } = {}) => (
   <table align="center" width="600">
     <tr>
