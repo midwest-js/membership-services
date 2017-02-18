@@ -12,7 +12,7 @@ const config = require(p.join(process.cwd(), 'server/config/membership'));
 
 const queries = require('./queries');
 
-const columns = ['id', 'email', 'dateCreated'];
+const columns = ['id', 'email', 'dateCreated', 'dateBanned', 'dateBlocked', 'dateEmailVerified'];
 
 
 if (config.userColumns) {
