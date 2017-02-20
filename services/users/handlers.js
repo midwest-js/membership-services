@@ -31,50 +31,43 @@ const handlers = {
 const { hashPassword } = require('./helpers');
 
 function create(json, cb) {
-  if (!json.dateEmailVerified) {
-    db.connect((err, client, done) => {
-      client.query('BEGIN;', (err) => {
-        if (err) {
-          db.rollback(client, done);
-          return cb(err);
-        }
+  hashPassword(json.password, (err) => {
+    if (err) return cb(err);
 
-        client.query(queries.create, [json.givenName, json.familyName, json.email, hashPassword(json.password), json.roles], (err, result) => {
-          if (err) {
-            db.rollback(client, done);
-            return cb(err);
-          }
+    if (!json.dateEmailVerified) {
+      db.begin((err, transaction) => {
+        if (err) return cb(err);
 
-          const userId = result.rows[0].id;
+        transaction.query('BEGIN;', (err) => {
+          if (err) return cb(err);
 
-          handlers.emailTokens.create(Object.assign({ userId }, _.pick(json, 'email')), (err, result) => {
-            if (err) {
-              db.rollback(client, done);
-              return cb(err);
-            }
+          transaction.query(queries.create, [json.givenName, json.familyName, json.email, hashPassword(json.password), json.roles], (err, result) => {
+            if (err) return cb(err);
 
-            client.query('COMMIT;', (err) => {
-              if (err) {
-                db.rollback(client, done);
-                return cb(err);
-              }
+            const userId = result.rows[0].id;
 
-              cb(null, {
-                userId,
-                token: result.rows[0].token,
+            handlers.emailTokens.create(Object.assign({ userId }, _.pick(json, 'email')), (err, result) => {
+              if (err) return cb(err);
+              transaction.commit((err) => {
+                if (err) return cb(err);
+
+                cb(null, {
+                  userId,
+                  token: result.rows[0].token,
+                });
               });
             });
-          });
-        }, client);
+          }, transaction);
+        });
       });
-    });
-  } else {
-    db.query(queries.create, [json.givenName, json.familyName, json.email, hashPassword(json.password), json.roles], (err, result) => {
-      if (err) return cb(err);
+    } else {
+      db.query(queries.create, [json.givenName, json.familyName, json.email, , json.roles], (err, result) => {
+        if (err) return cb(err);
 
-      cb(null, result);
-    });
-  }
+        cb(null, result);
+      });
+    }
+  });
 }
 
 function replace(id, json, cb) {
@@ -108,6 +101,9 @@ function update(id, json, cb) {
     json = _.pickBy(json, (value, key) => key !== 'roles' && columns.includes(key));
 
     const keys = _.keys(json).map((key) => `"${_.snakeCase(key)}"`);
+
+    if (!keys.length) return cb(new Error('No allowed parameters received'));
+
     const values = _.values(json);
 
     const query = `UPDATE users SET ${keys.map((key, i) => `${key}=$${i + 1}`).join(', ')} WHERE id = $${keys.length + 1} RETURNING ${columnsString};`;
@@ -138,6 +134,18 @@ function update(id, json, cb) {
   });
 }
 
+function updatePassword(id, password, cb) {
+  if (!password) return cb(new Error('Password required'));
+
+  const query = 'UPDATE users SET password=$2 WHERE id = $1 RETURNING id;';
+
+  db.query(query, [id, password], (err, result) => {
+    if (err) return cb(err);
+
+    cb(null, !!result.rows[0].id);
+  });
+}
+
 function findByEmail(email, cb) {
   db.query(queries.findByEmail, [email], (err, result) => {
     if (err) return cb(err);
@@ -165,4 +173,5 @@ module.exports = Object.assign(handlers.users, {
   getAuthenticationDetails,
   replace,
   update,
+  updatePassword,
 });

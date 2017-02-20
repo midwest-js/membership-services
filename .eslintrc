@@ -18,6 +18,7 @@
     "import/no-dynamic-require": 0,
     "import/no-unresolved": [2, { "ignore": ["^[^./]"] }],
     "global-require": 0,
+    "max-len": [2, { "code": 160 }],
     "no-cond-assign": 0,
     "no-console": [1, { "allow": ["warn", "error", "info"] }],
     "no-empty": [2, { "allowEmptyCatch": true }],

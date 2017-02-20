@@ -17,16 +17,17 @@ const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const factory = require('midwest/factories/rest');
 
-const { generateToken } = require('./helpers');
-
 const transport = nodemailer.createTransport(config.smtp);
 
 const handlers = {
+  emailTokens: require('../email-tokens/handlers'),
   invites: require('../invites/handlers'),
   permissions: require('../permissions/handlers'),
   roles: require('../roles/handlers'),
   users: require('./handlers'),
 };
+
+const { hashPassword } = require('./helpers');
 
 function create(req, res, next) {
   handlers.users.create(req.body, (err, user) => {
@@ -57,8 +58,6 @@ function getRoles(req, email, callback) {
   handlers.invites.findByEmail(email, (err, invite) => {
     if (err) return callback(err);
 
-    console.log(invite);
-
     let roles = invite ? invite.roles : [];
 
     handlers.permissions.findMatches(email, (err, permissions) => {
@@ -75,12 +74,12 @@ function getRoles(req, email, callback) {
   });
 }
 
-const changePasswordTemplate = require('./change-password-email');
+const resetPasswordEmailTemplate = require('./reset-password-email');
 
 const verifyTemplate = require('./verify-email');
 const welcomeTemplate = require('./welcome-email');
 
-function changePasswordWithToken(req, res, next) {
+function resetPasswordWithToken(req, res, next) {
   // hide password in body
   function sendError(err) {
     if (req.body.password) {
@@ -94,13 +93,15 @@ function changePasswordWithToken(req, res, next) {
     next(err);
   }
 
-  if (!req.body.email || !req.body.password || !req.body.token) {
+  // if (!req.body.email || !req.body.password || !req.body.token) {
+  if (!req.body.password) {
     const err = new Error('Not enough parameters');
     err.status = 422;
     return sendError(err);
   }
 
-  User.findOne({ email: req.body.email, 'passwordToken.token': req.body.token }, (err, user) => {
+  // handlers.users.findOne({ email: req.body.email, 'passwordToken.token': req.body.token }, (err, user) => {
+  handlers.users.findOne({ email: req.body.email }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -109,27 +110,28 @@ function changePasswordWithToken(req, res, next) {
       }));
     }
 
-    if (Date.now() > user.passwordToken.date + config.membership.timeouts.changePassword) {
-      return sendError(Object.assign(new Error('Token expired'), {
-        status: 410,
-      }));
-    }
 
-    user.password = req.body.password;
+    // if (Date.now() > user.passwordToken.date + config.membership.timeouts.changePassword) {
+    //   return sendError(Object.assign(new Error('Token expired'), {
+    //     status: 410,
+    //   }));
+    // }
 
-    user.passwordToken = undefined;
-
-    user.save((err) => {
+    hashPassword(req.body.password, (err, hash) => {
       if (err) return sendError(err);
 
-      res.status(200).json({ ok: true });
+      handlers.users.updatePassword(user.id, hash, (err) => {
+        if (err) return sendError(err);
+
+        res.sendStatus(200);
+      });
     });
   });
 }
 
 // middleware that checks if an email and token are valid
 function checkPasswordToken(req, res, next) {
-  User.findOne({ email: req.find.email, 'passwordToken.token': req.find.token }, (err, user) => {
+  handlers.users.findOne({ email: req.find.email, 'passwordToken.token': req.find.token }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -246,7 +248,7 @@ function register(req, res, next) {
 
           if (invite) {
             handlers.invites.consume(invite.id, (err) => {
-              if (err) console.log(err);
+              if (err) console.error(err);
             });
           }
 
@@ -297,8 +299,10 @@ function register(req, res, next) {
   });
 }
 
-function sendChangePasswordLink(req, res, next) {
-  User.findOne({ email: req.body.email }, (err, user) => {
+function sendResetPasswordLink(req, res, next) {
+  if (!req.body.email) return next(new Error('No email provided'));
+
+  handlers.users.findOne({ email: req.body.email }, (err, user) => {
     if (err) return next(err);
 
     if (!user) {
@@ -308,24 +312,21 @@ function sendChangePasswordLink(req, res, next) {
       return next(err);
     }
 
-    handlers.emailTokens.create(
-    )
-    user.generatePasswordToken((err) => {
+    handlers.emailTokens.create({ userId: user.id, email: user.email }, (err, token) => {
       if (err) return next(err);
 
-      const link = `${url.resolve(config.site.url, config.membership.paths.updatePassword)}?email=${encodeURI(user.email)}&token=${user.passwordToken.token}`;
+      const link = `${url.resolve(config.site.url, config.membership.paths.resetPassword)}?email=${encodeURI(user.email)}&token=${token}`;
 
       transport.sendMail({
         from: `${config.site.title} <${config.site.emails.robot}>`,
         to: user.email,
         subject: `Reset ${config.site.title} password`,
-        html: changePasswordTemplate(Object.assign({ link }, {
-          site: res.app.locals.site,
+        html: resetPasswordEmailTemplate(Object.assign({ link }, {
+          site: config.site,
         })),
       }, () => {
       // TODO handle error... should not be sent
-
-        res.status(200).json({ ok: true });
+        res.sendStatus(204);
       });
     });
   });
@@ -389,7 +390,7 @@ module.exports = Object.assign(factory({
   plural: 'users',
   handlers: handlers.users,
 }), {
-  changePasswordWithToken,
+  resetPasswordWithToken,
   checkPasswordToken,
   create,
   exists,
@@ -401,6 +402,6 @@ module.exports = Object.assign(factory({
   getCurrent,
   paginate: paginate(handlers.users.count, 20),
   register,
-  sendChangePasswordLink,
+  sendResetPasswordLink,
   verify,
 });

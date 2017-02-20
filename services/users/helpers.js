@@ -2,8 +2,9 @@
 
 const p = require('path');
 const crypto = require('crypto');
+const scrypt = require('scrypt-for-humans');
 
-const pg = require('pg');
+const db = require(p.join(process.cwd(), 'server/db'));
 
 const config = {
   membership: require(p.join(process.cwd(), 'server/config/membership')),
@@ -12,88 +13,37 @@ const config = {
 
 const queries = require('./queries');
 
-const pool = new pg.Pool(config.postgres);
+const { tokenLength } = config.membership;
 
-const { saltLength, tokenLength } = config.membership;
+function generateToken(length = tokenLength) {
+  return crypto.randomBytes(length / 2).toString('hex');
+}
 
-function generatePasswordToken() {
+function generatePasswordToken(email, length) {
   return {
     date: Date.now(),
-    token: crypto.randomBytes(tokenLength / 2).toString('hex'),
+    token: generateToken(length),
   };
 }
 
-function generateToken(email, length) {
-  length = (length || tokenLength) / 2;
-
-  return crypto.randomBytes(tokenLength / 2).toString('hex');
-}
-
-function generateEmailToken(email) {
+function generateEmailToken(email, length) {
   return {
     email,
-    token: crypto.randomBytes(tokenLength / 2).toString('hex'),
+    token: generateToken(length),
     date: Date.now(),
   };
 }
 
-// mix salt and hashed password into a single string
-function entangle(string, salt, t) {
-  const arr = (salt + string).split('');
-  const length = arr.length;
-
-  for (let i = 0; i < salt.length; i++) {
-    const num = ((i + 1) * t) % length;
-    const tmp = arr[i];
-    arr[i] = arr[num];
-    arr[num] = tmp;
-  }
-
-  return arr.join('');
+function hashPassword(password, cb) {
+  scrypt.hash(password, {}, cb);
 }
 
-// extract salt and hashed password from entangled string
-function detangle(string, t) {
-  const arr = string.split('');
-  const length = arr.length;
-
-  for (let i = saltLength - 1; i >= 0; i--) {
-    const num = ((i + 1) * t) % length;
-    const tmp = arr[i];
-    arr[i] = arr[num];
-    arr[num] = tmp;
-  }
-
-  const str = arr.join('');
-
-  return {
-    salt: str.substring(0, saltLength),
-    hash: str.substring(saltLength),
-  };
-}
-
-function hashPassword(password) {
-  password = password.trim();
-
-  const salt = crypto.randomBytes(saltLength / 2).toString('hex');
-
-  // hash the password
-  const passwordHash = crypto.createHash('sha512').update(salt + password).digest('hex');
-
-  // entangle the hashed password with the salt and save to the model
-  return entangle(passwordHash, salt, password.length);
-}
-
-function authenticate(password, hash) {
-  password = password.trim();
-
-  const obj = detangle(hash, password.length);
-
-  return crypto.createHash('sha512').update(obj.salt + password).digest('hex') === obj.hash;
+function authenticate(password, hash, cb) {
+  scrypt.verifyHash(password, hash, cb);
 }
 
 function login(user) {
-  pool.query(queries.login, [user.email], (err) => {
+  db.query(queries.login, [user.email], (err) => {
     if (err) console.error(err);
   });
 }

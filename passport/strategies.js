@@ -24,19 +24,23 @@ function localCallback(email, password, done) {
       if (!user.password) {
         message = config.messages.login.notLocal;
       } else if (!user.dateEmailVerified) {
-        message = config.messages.login.emailNotUnverified;
+        message = config.messages.login.emailNotVerified;
       } else if (user.dateBlocked) {
         message = config.messages.login.blocked;
       } else if (user.dateBanned) {
         message = config.messages.login.banned;
-      } else if (!authenticate(password, user.password)) {
-        message = config.messages.login.wrongPassword;
+      } else {
+        return authenticate(password, user.password, (err) => {
+          if (err) return done(err);
+
+          done(null, user);
+        });
       }
     } else {
-      message = config.messages.login.noLocalUser;
+      message = config.messages.login.noUserFound;
     }
 
-    done(null, user, message);
+    done(null, null, message);
   });
 }
 

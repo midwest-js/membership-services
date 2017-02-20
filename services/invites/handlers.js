@@ -1,7 +1,6 @@
 'use strict';
 
 // modules > native
-const p = require('path');
 const url = require('url');
 
 // modules > 3rd party
@@ -10,14 +9,14 @@ const nodemailer = require('nodemailer');
 // modules > midwest
 const factory = require('midwest/factories/handlers');
 
-// modules > project
-const db = require(p.join(PWD, 'server/db'));
-const config = {
-  smtp: require(p.join(process.cwd(), 'server/config/smtp')),
-  site: require(p.join(process.cwd(), 'server/config/site')),
-  membership: require(p.join(process.cwd(), 'server/config/membership')),
-};
+const verifyConfig = require('../../verify-config');
 
+// modules > project
+const config = require('../../config');
+
+verifyConfig(config);
+
+const { db } = config;
 
 // modules > local
 const { generateToken } = require('../users/helpers');
@@ -35,12 +34,12 @@ function create(json, cb) {
   db.query(queries.create, [json.email, token, json.createdById, json.roles], (err, result) => {
     if (err) return cb(err);
 
-    const link = `${url.resolve(config.site.url, config.membership.paths.register)}?email=${json.email}&token=${token}`;
+    const link = `${url.resolve(config.site.url, config.paths.register)}?email=${json.email}&token=${token}`;
 
     transport.sendMail({
-      from: config.membership.invite.from,
+      from: config.invite.from,
       to: json.email,
-      subject: config.membership.invite.subject,
+      subject: config.invite.subject || `You have been invited to ${config.site.title}`,
       html: template({ site: config.site, inviter: json.createdByEmail, link }),
     }, (err) => {
       if (err) return cb(err);
