@@ -123,7 +123,7 @@ function resetPasswordWithToken(req, res, next) {
       handlers.users.updatePassword(user.id, hash, (err) => {
         if (err) return sendError(err);
 
-        res.sendStatus(200);
+        res.sendStatus(204);
       });
     });
   });
