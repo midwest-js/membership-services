@@ -13,11 +13,7 @@ const { getAuthenticationDetails } = require('../services/users/handlers');
 const { authenticate } = require('../services/users/helpers');
 
 function localCallback(email, password, done) {
-  getAuthenticationDetails(email.toLowerCase(), (err, user) => {
-    if (err) {
-      return done(err);
-    }
-
+  getAuthenticationDetails(email.toLowerCase()).then((user) => {
     let message;
 
     if (user) {
@@ -30,18 +26,14 @@ function localCallback(email, password, done) {
       } else if (user.dateBanned) {
         message = config.messages.login.banned;
       } else {
-        return authenticate(password, user.password, (err) => {
-          if (err) return done(err);
-
-          done(null, user);
-        });
+        return authenticate(password, user.password).then(() => done(null, user));
       }
     } else {
       message = config.messages.login.noUserFound;
     }
 
     done(null, null, message);
-  });
+  }).catch(done);
 }
 
 passport.use('local', new LocalStrategy(config.passport.local, localCallback));

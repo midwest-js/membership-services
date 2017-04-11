@@ -10,17 +10,10 @@ const { getAuthenticationDetails } = require('../services/users/handlers');
 
 module.exports = function automaticLogin(req, res, next) {
   if (global.LOGIN_USER && !req.user) {
-    getAuthenticationDetails(LOGIN_USER, (err, user) => {
-      if (err) return next(err);
-
-      if (!user) return next();
-
-      req.login(user, (err) => {
-        if (err) return next(err);
-
-        next();
-      });
-    });
+    getAuthenticationDetails(LOGIN_USER)
+      .then((user) => req.login(user))
+      .then(() => next())
+      .catch(next);
   } else {
     next();
   }

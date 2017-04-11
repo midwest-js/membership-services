@@ -2,16 +2,14 @@
 
 // modules > native
 const url = require('url');
-const p = require('path');
 
 // modules > 3rd party
 const _ = require('lodash');
-const requireDir = require('require-dir');
 const nodemailer = require('nodemailer');
-const passport = require('passport');
 
-const config = requireDir(p.join(process.cwd(), 'server/config'));
-const providers = config.membership.providers || [];
+const config = require('../../config');
+
+const providers = config.providers || [];
 
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
@@ -54,22 +52,16 @@ function create(req, res, next) {
   });
 }
 
-function getRoles(req, email, callback) {
-  handlers.invites.findByEmail(email, (err, invite) => {
-    if (err) return callback(err);
-
+function getRoles(req, email) {
+  return handlers.invites.findByEmail(email).then((invite) => {
     let roles = invite ? invite.roles : [];
 
-    handlers.permissions.findMatches(email, (err, permissions) => {
-      if (err) {
-        callback(err);
-      }
-
+    return handlers.permissions.findMatches(email).then((permissions) => {
       if (permissions) {
         roles = _.union(roles, ...permissions.map((permission) => permission.roles));
       }
 
-      return callback(null, roles, invite);
+      return { invite, roles };
     });
   });
 }
@@ -111,7 +103,7 @@ function resetPasswordWithToken(req, res, next) {
     }
 
 
-    // if (Date.now() > user.passwordToken.date + config.membership.timeouts.changePassword) {
+    // if (Date.now() > user.passwordToken.date + config.timeouts.changePassword) {
     //   return sendError(Object.assign(new Error('Token expired'), {
     //     status: 410,
     //   }));
@@ -176,127 +168,87 @@ function getCurrent(req, res, next) {
   next();
 }
 
+function createError([ message, status ]) {
+  const err = new Error(message);
+
+  err.status = status;
+
+  return err;
+}
+
 function register(req, res, next) {
-  function generateError(err) {
-    if (req.body.password) {
-      req.body.password = 'DELETED';
-    }
 
-    if (req.body.confirmPassword) {
-      req.body.confirmPassword = 'DELETED';
-    }
+  // if (!req.body.email) {
+  //   if (req.body.facebook && req.body.facebook.email) {
+  //     req.body.email = req.body.facebook.email;
+  //   } else {
+  //     const err = new Error(config.messages.register.missingProperties);
+  //     err.status = 422;
+  //     return generateError(err);
+  //   }
+  // }
 
-    next(err);
-  }
+  handlers.users.count({ email: req.body.email }).then((count) => {
+    if (count) throw createError(config.errors.register.duplicateEmail);
 
-  if (!req.body.email) {
-    if (req.body.facebook && req.body.facebook.email) {
-      req.body.email = req.body.facebook.email;
-    } else {
-      const err = new Error(config.membership.messages.register.missingProperties);
-      err.status = 422;
-      return generateError(err);
-    }
-  }
+    // req.body.email = req.body.email.toLowerCase();
 
-  handlers.users.count({ email: req.body.email }, (err, count) => {
-    if (err) return generateError(err);
+    // const newUser = _.cloneDeep(req.body);
 
-    if (count) {
-      err = new Error(config.membership.messages.register.duplicateEmail);
-      err.status = 409;
-      generateError(err);
-    } else {
-      req.body.email = req.body.email.toLowerCase();
+    return getRoles(req, req.body.email);
+  })
+    .then(({ roles, invite }) => {
+      if (!roles) throw createError(config.messages.register.notAuthorized);
 
-      const provider = _.pick(req.body, passport.providers);
+      const newUser = _.merge({}, req.body, { roles });
 
-      if (!_.isEmpty(provider)
-          && (
-            !req.session.newUser
-            || !_.isEqual(provider, _.pick(req.session.newUser, passport.providers))
-          )) {
-        err = new Error(`The supplied user credentials does not match those retrieved from ${_.keys(provider)[0]}.`);
-        err.status = 400;
-        return generateError(err);
+      // TEMP
+      if (invite) newUser.dateEmailVerified = new Date();
+
+      return handlers.users.create(newUser).then((user) => {
+        if (invite) return handlers.invites.consume(invite.id).then(() => user);
+
+        return user;
+      });
+    }).then((user) => {
+      if (user.emailToken) {
+        const link = `${url.resolve(config.site.url, config.paths.verifyEmail)}?email=${user.email}&token=${user.emailToken}`;
+
+        return transport.sendMail({
+          from: `${config.site.title} <${config.site.emails.robot}>`,
+          to: user.email,
+          subject: `Verify ${config.site.title} account`,
+          html: verifyTemplate({ site: config.site, user: user, link }),
+        }).then(() => user);
       }
 
-      delete req.session.newUser;
+      return req.login(user).then(() => (
+        transport.sendMail({
+          from: `${config.site.title} <${config.site.emails.robot}>`,
+          to: user.email,
+          subject: `Welcome to ${config.site.title}!`,
+          html: welcomeTemplate({ site: config.site, user: user }),
+        })
+      )).then(() => user);
+    })
+    .then((user) => {
+      if (req.accepts(['json', '*/*'] === 'json')) {
+        return res.status(201).json(_.omit(user, 'password', ...providers));
+      }
 
-      const newUser = _.cloneDeep(req.body);
+      res.redirect(config.redirects.register);
+    })
+    .catch((err) => {
+      if (req.body.password) {
+        req.body.password = 'DELETED';
+      }
 
-      getRoles(req, req.body.email, (err, roles, invite) => {
-        if (err) {
-          return generateError(err);
-        }
+      if (req.body.confirmPassword) {
+        req.body.confirmPassword = 'DELETED';
+      }
 
-        if (!roles) {
-          err = new Error(config.membership.messages.register.notAuthorized);
-          err.status = 401;
-          return generateError(err);
-        }
-
-        newUser.roles = roles;
-
-        // TEMP
-        if (invite || !_.isEmpty(provider)) {
-          newUser.dateEmailVerified = new Date();
-        }
-
-        handlers.users.create(newUser, (err, result) => {
-          if (err) return generateError(err);
-
-          if (invite) {
-            handlers.invites.consume(invite.id, (err) => {
-              if (err) console.error(err);
-            });
-          }
-
-          function respond() {
-            if (req.accepts(['json', '*/*'] === 'json')) {
-              res.status(201).json(_.omit(newUser, 'password', ...providers));
-            } else {
-              res.redirect(config.membership.redirects.register);
-            }
-          }
-
-          if (err) return generateError(err);
-
-          res.status(201);
-
-          if (!result.token) {
-            req.login(newUser, () => {
-              transport.sendMail({
-                from: `${config.site.title} <${config.site.emails.robot}>`,
-                to: newUser.email,
-                subject: `Welcome to ${config.site.title}!`,
-                html: welcomeTemplate({ site: config.site, user: newUser }),
-              }, (err) => {
-                // TODO handle error... should not be sent
-                if (err) return generateError(err);
-
-                respond();
-              });
-            });
-          } else {
-            const link = `${url.resolve(config.site.url, config.membership.paths.verifyEmail)}?email=${newUser.email}&token=${result.token}`;
-
-            transport.sendMail({
-              from: `${config.site.title} <${config.site.emails.robot}>`,
-              to: newUser.email,
-              subject: `Verify ${config.site.title} account`,
-              html: verifyTemplate({ site: config.site, user: newUser, link }),
-            }, (err) => {
-              // TODO handle error... should not be sent
-              if (err) return generateError(err);
-
-              respond();
-            });
-          }
-        });
-      });
-    }
-  });
+      next(err);
+    });
 }
 
 function sendResetPasswordLink(req, res, next) {
@@ -315,7 +267,7 @@ function sendResetPasswordLink(req, res, next) {
     handlers.emailTokens.create({ userId: user.id, email: user.email }, (err, token) => {
       if (err) return next(err);
 
-      const link = `${url.resolve(config.site.url, config.membership.paths.resetPassword)}?email=${encodeURI(user.email)}&token=${token}`;
+      const link = `${url.resolve(config.site.url, config.paths.resetPassword)}?email=${encodeURI(user.email)}&token=${token}`;
 
       transport.sendMail({
         from: `${config.site.title} <${config.site.emails.robot}>`,
@@ -363,7 +315,7 @@ function verify(req, res, next) {
       return next(err);
     }
 
-    if (Date.now() > user.emailToken.date + config.membership.timeouts.verifyEmail) {
+    if (Date.now() > user.emailToken.date + config.timeouts.verifyEmail) {
       err = new Error('Token has expired.');
       err.status = 410;
       return next(err);
@@ -380,7 +332,7 @@ function verify(req, res, next) {
     user.save(() => {
       req.login(user, () => {
         // TODO this should not redirect to the same page as register
-        res.redirect(config.membership.redirects.register);
+        res.redirect(config.redirects.register);
       });
     });
   });

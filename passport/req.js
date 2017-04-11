@@ -24,14 +24,14 @@ reqProto.isAdmin = function () {
   return this.hasRoles(['admin']);
 };
 
-reqProto.originalLogin = reqProto.login;
+reqProto.__login = reqProto.login;
 
-reqProto.login = function (user, ...args) {
-  login(user);
+reqProto.login = function (user) {
+  return new Promise((resolve, reject) => {
+    this.__login(user, (err) => {
+      if (err) return reject(err);
 
-  if (this.session && this.session.newUser) {
-    delete this.session.newUser;
-  }
-
-  this.originalLogin(user, ...args);
+      resolve(login(user));
+    });
+  });
 };

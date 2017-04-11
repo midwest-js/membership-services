@@ -1,7 +1,12 @@
 'use strict';
 
-const config = require('./config');
+const _ = require('lodash');
+const deepFreeze = require('deep-freeze');
+
+const config = require('./config-base');
 
 exports.configure = (userConfig) => {
-  Object.assign(config, userConfig);
+  _.merge(config, userConfig);
+
+  deepFreeze(config);
 };

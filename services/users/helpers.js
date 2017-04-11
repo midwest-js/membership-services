@@ -1,21 +1,13 @@
 'use strict';
 
-const p = require('path');
 const crypto = require('crypto');
 const scrypt = require('scrypt-for-humans');
 
-const db = require(p.join(process.cwd(), 'server/db'));
+const config = require('../../config');
 
-const config = {
-  membership: require(p.join(process.cwd(), 'server/config/membership')),
-  postgres: require(p.join(PWD, 'server/config/postgres')),
-};
+const queries = require('./sql');
 
-const queries = require('./queries');
-
-const { tokenLength } = config.membership;
-
-function generateToken(length = tokenLength) {
+function generateToken(length = config.tokenLength) {
   return crypto.randomBytes(length / 2).toString('hex');
 }
 
@@ -34,18 +26,16 @@ function generateEmailToken(email, length) {
   };
 }
 
-function hashPassword(password, cb) {
-  scrypt.hash(password, {}, cb);
+function hashPassword(password) {
+  return scrypt.hash(password, {});
 }
 
-function authenticate(password, hash, cb) {
-  scrypt.verifyHash(password, hash, cb);
+function authenticate(password, hash) {
+  return scrypt.verifyHash(password, hash);
 }
 
-function login(user) {
-  db.query(queries.login, [user.email], (err) => {
-    if (err) console.error(err);
-  });
+function login(user, client = config.db) {
+  return client.query(queries.login, [user.email]);
 }
 
 module.exports = {

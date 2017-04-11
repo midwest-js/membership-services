@@ -1,16 +1,14 @@
 'use strict';
 
-const p = require('path');
-
 const _ = require('lodash');
 
 const factory = require('midwest/factories/handlers');
-const { columns: sqlColumns } = require('midwest/util/sql');
+const { one, many } = require('midwest/pg/result');
+const sql = require('midwest/pg/sql-helpers');
 
-const db = require(p.join(process.cwd(), 'server/db'));
-const config = require(p.join(process.cwd(), 'server/config/membership'));
+const config = require('../../config');
 
-const queries = require('./queries');
+const queries = require('./sql');
 
 const columns = ['id', 'email', 'dateCreated', 'dateBanned', 'dateBlocked', 'dateEmailVerified'];
 
@@ -19,54 +17,59 @@ if (config.userColumns) {
   columns.push(...config.userColumns);
 }
 
+const columnsString = sql.columns(columns);
+
 const handlers = {
   users: factory({
-    table: 'users',
     columns,
+    db: config.db,
     exclude: ['create', 'replace', 'update'],
+    table: 'users',
   }),
+  roles: require('../roles/handlers'),
   emailTokens: require('../email-tokens/handlers'),
 };
 
 const { hashPassword } = require('./helpers');
 
-function create(json, cb) {
-  hashPassword(json.password, (err) => {
-    if (err) return cb(err);
+function addRoles(userId, roles, client = config.db) {
+  return client.query(queries.addRoles, [userId, roles]).then(many);
+}
 
-    if (!json.dateEmailVerified) {
-      db.begin((err, transaction) => {
-        if (err) return cb(err);
+function create(json, client = config.db) {
+  const roleIds = typeof json.roles[0] === 'object' ? json.roles.map((role) => role.id) : json.roles;
 
-        transaction.query('BEGIN;', (err) => {
-          if (err) return cb(err);
+  return hashPassword(json.password).then((hash) => {
+    return client.begin().then((t) => {
+      return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.dateEmailVerified])
+        .then((result) => {
+          const user = result.rows[0];
 
-          transaction.query(queries.create, [json.givenName, json.familyName, json.email, hashPassword(json.password), json.roles], (err, result) => {
-            if (err) return cb(err);
-
-            const userId = result.rows[0].id;
-
-            handlers.emailTokens.create(Object.assign({ userId }, _.pick(json, 'email')), (err, result) => {
-              if (err) return cb(err);
-              transaction.commit((err) => {
-                if (err) return cb(err);
-
-                cb(null, {
-                  userId,
-                  token: result.rows[0].token,
-                });
-              });
+          return Promise.all([
+            addRoles(user.id, roleIds, t),
+            handlers.emailTokens.create({ userId: user.id, email: user.email }, t),
+            handlers.roles.findByIds(roleIds),
+          ])
+            .then((result) => t.commit().then(() => result))
+            .then(([, token, roles]) => {
+              user.roles = roles;
+              user.emailToken = token;
+              return user;
             });
-          }, transaction);
         });
-      });
-    } else {
-      db.query(queries.create, [json.givenName, json.familyName, json.email, , json.roles], (err, result) => {
-        if (err) return cb(err);
+    });
+  });
+}
 
-        cb(null, result);
-      });
-    }
+function findByEmail(email, client = config.db) {
+  return client.query(queries.findByEmail, [email]).then(one);
+}
+
+function getAuthenticationDetails(email, client = config.db) {
+  return client.query(queries.getAuthenticationDetails, [email]).then((result) => {
+    if (!result.rows.length) throw new Error('No user found');
+
+    return result.rows[0];
   });
 }
 
@@ -74,104 +77,50 @@ function replace(id, json, cb) {
   cb();
 }
 
-const updateRolesQuery = `
-WITH deleted_rows AS (
-  DELETE FROM user_roles
-    WHERE user_id = $1 AND role_id NOT IN
-      (SELECT role_ids FROM unnest($2::int[]) AS role_ids)
-    RETURNING role_id
-), inserted_rows AS (
-  INSERT INTO user_roles(user_id, role_id)
-     SELECT $1, role_ids FROM unnest($2::int[]) AS role_ids WHERE NOT EXISTS
-      (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_id = role_ids)
-    RETURNING role_id, user_id
-) 
-
-SELECT role_id, user_id FROM inserted_rows;
-`;
-
-const columnsString = sqlColumns(columns);
-
-function update(id, json, cb) {
-  db.begin((err, transaction) => {
-    if (err) return cb(err);
-
+function update(id, json, client = config.db) {
+  return client.begin().then((t) => {
     let roles = json.roles;
 
     json = _.pickBy(json, (value, key) => key !== 'roles' && columns.includes(key));
 
     const keys = _.keys(json).map((key) => `"${_.snakeCase(key)}"`);
 
-    if (!keys.length) return cb(new Error('No allowed parameters received'));
+    if (!keys.length && !roles) return Promise.reject(new Error('No allowed parameters received'));
 
     const values = _.values(json);
 
     const query = `UPDATE users SET ${keys.map((key, i) => `${key}=$${i + 1}`).join(', ')} WHERE id = $${keys.length + 1} RETURNING ${columnsString};`;
 
-    transaction.query(query, [...values, id], (err, result) => {
-      if (err) return cb(err);
-
+    return t.query(query, [...values, id]).then(() => {
       if (roles && roles.length) {
         if (typeof roles[0] === 'object') roles = roles.map((role) => role.id);
 
-        transaction.query(updateRolesQuery, [id, roles], (err) => {
-          if (err) return cb(err);
-
-          transaction.commit((err) => {
-            if (err) return cb(err);
-
-            handlers.users.findById(id, cb);
-          });
-        });
-      } else {
-        transaction.commit((err) => {
-          if (err) return err;
-
-          cb(null, result.rows[0]);
-        });
+        return t.query(queries.updateRolesQuery, [id, roles]);
       }
-    });
+    }).then(t.commit).then(() => handlers.users.findById(id));
   });
 }
 
-function updatePassword(id, password, cb) {
-  if (!password) return cb(new Error('Password required'));
+function updatePassword(id, password, client = config.db) {
+  if (!password) return Promise.reject(new Error('Password required'));
 
   const query = 'UPDATE users SET password=$2 WHERE id = $1 RETURNING id;';
 
-  db.query(query, [id, password], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, !!result.rows[0].id);
-  });
+  // TODO maybe throw error if not updated properly
+  return client.query(query, [id, password]).then((result) => !!result.rows[0].id);
 }
 
-function findByEmail(email, cb) {
-  db.query(queries.findByEmail, [email], (err, result) => {
-    if (err) return cb(err);
+function updateRoles() {
 
-    cb(null, result.rows[0]);
-  });
 }
-
-function getAuthenticationDetails(email, cb) {
-  db.query(queries.getAuthenticationDetails, [email], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rows[0]);
-  });
-}
-
-// function register(json, cb) {
-//   handlers.create(_.omit(json, 'roles'), (err, ))
-
-// }
 
 module.exports = Object.assign(handlers.users, {
+  addRoles,
   create,
   findByEmail,
   getAuthenticationDetails,
   replace,
   update,
   updatePassword,
+  updateRoles,
 });

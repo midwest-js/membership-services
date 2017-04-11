@@ -48,9 +48,7 @@ function local(req, res, next) {
     }
 
 
-    req.login(user, (err) => {
-      if (err) return next(err);
-
+    req.login(user).then(() => {
       delete user.password;
 
       res.status(200);
@@ -65,7 +63,7 @@ function local(req, res, next) {
           res.json(user);
         },
       });
-    });
+    }).catch(next);
   };
 }
 

@@ -8,19 +8,14 @@ const nodemailer = require('nodemailer');
 
 // modules > midwest
 const factory = require('midwest/factories/handlers');
-
-const verifyConfig = require('../../verify-config');
+const { one, many } = require('midwest/pg/result');
 
 // modules > project
 const config = require('../../config');
 
-verifyConfig(config);
-
-const { db } = config;
-
 // modules > local
 const { generateToken } = require('../users/helpers');
-const queries = require('./queries');
+const queries = require('./sql');
 
 const columns = ['id', 'email', 'dateCreated', 'createdById', 'dateModified', 'dateConsumed'];
 
@@ -28,82 +23,56 @@ const transport = nodemailer.createTransport(config.smtp);
 
 const template = require('./email');
 
-function create(json, cb) {
+function create(json, client = config.db) {
   const token = generateToken();
 
-  db.query(queries.create, [json.email, token, json.createdById, json.roles], (err, result) => {
-    if (err) return cb(err);
-
+  return client.query(queries.create, [json.email, token, json.createdById, json.roles]).then((result) => {
     const link = `${url.resolve(config.site.url, config.paths.register)}?email=${json.email}&token=${token}`;
 
-    transport.sendMail({
+    return transport.sendMail({
       from: config.invite.from,
       to: json.email,
       subject: config.invite.subject || `You have been invited to ${config.site.title}`,
       html: template({ site: config.site, inviter: json.createdByEmail, link }),
-    }, (err) => {
-      if (err) return cb(err);
-
-      return cb(null, result.rows[0]);
-    });
+    }).then(() => result.rows[0]);
   });
 }
 
-function find(json, cb) {
-  const page = Math.max(0, json.page);
+function find(json, client = config.db) {
+  const offset = Math.max(0, json.offset);
 
-  db.query(queries.find, [page * 20], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rows);
-  });
+  return client.query(queries.find, [offset]).then(many);
 }
 
-function findById(id, cb) {
-  db.query(queries.findById, [id], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rows[0]);
-  });
+function findById(id, client = config.db) {
+  return client.query(queries.findById, [id]).then(one);
 }
 
-function findByEmail(email, cb) {
-  db.query(queries.findByEmail, [email], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rows[0]);
-  });
+function findByEmail(email, client = config.db) {
+  return client.query(queries.findByEmail, [email]).then(one);
 }
 
-function findByTokenAndEmail(token, email, cb) {
-  db.query(queries.findByTokenAndEmail, [token, email], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rows[0]);
-  });
+function findByTokenAndEmail(token, email, client = config.db) {
+  return client.query(queries.findByTokenAndEmail, [token, email]).then(one);
 }
 
-function getAll(cb) {
-  db.query(queries.getAll, (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rowCount ? result.rows : undefined);
-  });
+function getAll(client = config.db) {
+  return client.query(queries.getAll).then(many);
 }
 
-function consume(id, cb) {
+function consume(id) {
   const query = 'UPDATE invites SET date_consumed = NOW() WHERE id = $1;';
 
-  db.query(query, [id], (err, result) => {
-    if (err) return cb(err);
-
-    cb(null, result.rowCount > 0);
+  // return client.query(query, [id]).then((result) => result.rowCount > 0);
+  return client.query(query, [id]).then((result) => {
+    if (result.rowCount === 0) throw new Error('Invite not consumed');
   });
 }
 
 module.exports = Object.assign(factory({
+  db: config.db,
   table: 'invites',
-  columns: columns,
+  columns,
   exclude: ['create', 'getAll', 'find', 'findById'],
 }), {
   create,
