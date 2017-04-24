@@ -6,68 +6,46 @@ global.PWD = process.env.NODE_PWD || process.cwd();
 global.ENV = process.env.NODE_ENV || 'development';
 
 const p = require('path');
-const crypto = require('crypto');
 
 require('app-module-path').addPath(p.join(PWD, 'node_modules'));
 
-const _ = require('lodash');
 const chalk = require('chalk');
-const pg = require('pg');
+const dbFactory = require('midwest/pg/factory');
 
-const postgresConfig = require(p.join(PWD, 'server/config/postgres'));
-const config = require(p.join(PWD, 'server/config/membership'));
+const config = {
+  postgres: require(p.join(PWD, 'server/config/postgres')),
+  site: require(p.join(PWD, 'server/config/site')),
+  smtp: require(p.join(PWD, 'server/config/smtp')),
+  membership: require(p.join(PWD, 'server/config/membership')),
+};
 
-const client = new pg.Client(postgresConfig);
+const db = dbFactory(config.postgres);
 
 const successPrefix = `[${chalk.green('SUCCESS')}]`;
 const errorPrefix = `[${chalk.red('ERROR')}]`;
 
-function parseUrlEncoded(str) {
-  return str && str.split('&').reduce((result, split) => {
-    const [key, value] = split.split('=');
+const membership = require('midwest-module-membership');
 
-    if (value) {
-      result[key] = value;
-    }
+membership.configure(Object.assign({ db, site: config.site, smtp: config.smtp }, config.membership));
 
-    return result;
-  }, {})
-}
+const { create } = require('../services/users/handlers');
 
-const { hashPassword } = require('../services/users/helpers');
-
-function createUser(email, password, roles, urlEncoded) {
+function createUser(email, password, roles = 'admin,user') {
   if (!email || !password) {
     console.log('Usage: bin/create-user.js [email] [password] [?roles]');
     process.exit(1);
   }
 
-  password = hashPassword(password);
-  console.log(password)
-  console.log(password.length);
-
-  client.connect((err) => {
-    client.query(`INSERT INTO users (given_name, family_name, email, password, date_email_verified) VALUES ('Linus', 'Miller', '${email}', '${password}', NOW()) RETURNING id`, (err, result) => {
-      if (err) return console.log(err);
-
-      console.log(`${successPrefix}Created user ${chalk.bold.blue(result.rows[0].email)}`);
-
-      const userId = result.rows[0].id;
-
-      client.end();
-    });
-
-  })
+  create({
+    givenName: 'Linus',
+    familyName: 'Miller',
+    email,
+    password,
+    roles: roles.split(','),
+    dateEmailVerified: new Date(),
+  }).then((user) => {
+    console.log(`${successPrefix} Created user ${chalk.bold.blue(user.email)} with roles ${user.roles.map((role) => chalk.bold.red(role.name)).join(', ')}`);
+  }).catch(console.error).then(() => db.end());
 }
 
-const queries = require('../services/users/queries');
-
-// client.connect((err) => {
-//   client.query(queries.findById, [4], (err, result) => {
-//     console.log(err);
-//     console.log(result);
-//     // console.log(Array.isArray(result.rows[0].roles));
-//     client.end();
-//   })
-// })
 createUser(...process.argv.slice(2));

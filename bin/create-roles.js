@@ -17,7 +17,6 @@ const postgresConfig = require(p.join(PWD, 'server/config/postgres'));
 
 const client = new pg.Client(postgresConfig);
 
-
 const successPrefix = `[${chalk.green('SUCCESS')}] `;
 // const errorPrefix = `[${chalk.red('ERROR')}] `;
 
