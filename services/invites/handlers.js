@@ -17,7 +17,7 @@ const config = require('../../config');
 const { generateToken } = require('../users/helpers');
 const queries = require('./sql');
 
-const columns = ['id', 'email', 'dateCreated', 'createdById', 'dateModified', 'dateConsumed'];
+const columns = ['id', 'email', 'dateCreated', 'createdById', 'dateModified', 'dateConsumed', 'createdById'];
 
 const transport = nodemailer.createTransport(config.smtp);
 
