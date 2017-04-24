@@ -37,12 +37,24 @@ function addRoles(userId, roles, client = config.db) {
 }
 
 function create(json, client = config.db) {
-  const roleIds = typeof json.roles[0] === 'object' ? json.roles.map((role) => role.id) : json.roles;
+  if (!json.roles) json.roles = [];
+  else if (!Array.isArray(json.roles)) json.roles = [json.roles];
 
-  return hashPassword(json.password).then((hash) => {
+  let rolesPromise;
+
+  if (typeof json.roles[0] === 'string') rolesPromise = handlers.roles.findByNames(json.roles);
+  else if (typeof json.roles[0] === 'number') rolesPromise = handlers.roles.findByIds(json.roles);
+  else rolesPromise = Promise.resolve(json.roles);
+
+  return Promise.all([
+    rolesPromise,
+    hashPassword(json.password),
+  ]).then(([roles, hash]) => {
     return client.begin().then((t) => {
       return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.dateEmailVerified])
         .then((result) => {
+          const roleIds = roles.map((role) => role.id);
+
           const user = result.rows[0];
 
           return Promise.all([
