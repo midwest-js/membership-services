@@ -29,22 +29,22 @@ module.exports = {
     maxAge: 30 * 24 * 60 * 60 * 1000,
   },
 
-  messages: {
+  errors: {
     login: {
-      notLocal: 'Account requires external login.',
-      wrongPassword: 'Wrong password.',
-      noLocalUser: 'No user registered with that email.',
-      noExternalUser: 'The account is not connected to this website.',
-      externalLoginFailed: 'External login failed.',
-      emailNotVerified: 'This account\'s email has not been verified.',
-      banned: 'User is banned.',
-      blocked: 'User is blocked due to too many login attempts.',
+      notLocal: ['Account requires external login.', 400],
+      wrongPassword: ['Wrong password.', 401],
+      noUserFound: ['No user registered with that email.', 400],
+      noExternalUser: ['The account is not connected to this website.', 400],
+      externalLoginFailed: ['External login failed.', 504],
+      emailNotVerified: ['This account\'s email has not been verified.', 401],
+      banned: ['User is banned.', 401],
+      blocked: ['User is blocked due to too many login attempts.', 401],
     },
 
     register: {
-      missingProperties: 'Oh no missing stuff',
-      notAuthorized: 'The email is not authorized to create an account.',
-      duplicateEmail: 'The email has already been registered.',
+      missingProperties: ['Oh no missing stuff', 422],
+      notAuthorized: ['The email is not authorized to create an account.', 401],
+      duplicateEmail: ['The email has already been registered.', 409],
     },
   },
 
@@ -67,6 +67,4 @@ module.exports = {
 
   // needs to be even
   tokenLength: 64,
-  // needs to be even
-  saltLength: 16,
 };

@@ -6,6 +6,7 @@ const p = require('path');
 // modules > passport
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const createError = require('midwest/util/create-error');
 
 const config = require(p.join(process.cwd(), 'server/config/membership'));
 
@@ -14,25 +15,25 @@ const { authenticate } = require('../services/users/helpers');
 
 function localCallback(email, password, done) {
   getAuthenticationDetails(email.toLowerCase()).then((user) => {
-    let message;
+    let error;
 
     if (user) {
       if (!user.password) {
-        message = config.messages.login.notLocal;
+        error = config.errors.login.notLocal;
       } else if (!user.dateEmailVerified) {
-        message = config.messages.login.emailNotVerified;
+        error = config.errors.login.emailNotVerified;
       } else if (user.dateBlocked) {
-        message = config.messages.login.blocked;
+        error = config.errors.login.blocked;
       } else if (user.dateBanned) {
-        message = config.messages.login.banned;
+        error = config.errors.login.banned;
       } else {
         return authenticate(password, user.password).then(() => done(null, user));
       }
     } else {
-      message = config.messages.login.noUserFound;
+      error = config.errors.login.noUserFound;
     }
 
-    done(null, null, message);
+    done(createError(...error));
   }).catch(done);
 }
 

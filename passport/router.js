@@ -13,20 +13,22 @@ require('./setup');
 
 const config = require(p.join(process.cwd(), 'server/config/membership'));
 
-function _401(str) {
-  return Object.assign(new Error(str ? str.message || str : 'No message'), {
-    status: 401,
-  });
-}
+const responses = {
+  json(req, res, user) {
+    if (req.session.previousUrl) res.set('Location', req.session.previousUrl);
+
+    res.json(user);
+  },
+
+  html(req, res) {
+    res.redirect(req.session.previousUrl || '/');
+  },
+};
 
 function local(req, res, next) {
-  return (err, user, message) => {
+  return (err, user) => {
     // message will only be set if passport strategy has encountered login
     // error (not a coding error).
-    if (message) {
-      err = _401(message);
-    }
-
     if (err) {
       if (req.body.password) {
         req.body.password = 'DELETED';
@@ -53,16 +55,7 @@ function local(req, res, next) {
 
       res.status(200);
 
-      res.format({
-        html() {
-          res.redirect(req.session.previousUrl || '/');
-        },
-        json() {
-          if (req.session.previousUrl) res.set('Location', req.session.previousUrl);
-
-          res.json(user);
-        },
-      });
+      responses[req.accepts(['json', 'html'])](req, res, user);
     }).catch(next);
   };
 }

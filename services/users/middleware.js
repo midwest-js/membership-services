@@ -14,6 +14,7 @@ const providers = config.providers || [];
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const factory = require('midwest/factories/rest');
+const createError = require('midwest/util/create-error');
 
 const transport = nodemailer.createTransport(config.smtp);
 
@@ -168,28 +169,20 @@ function getCurrent(req, res, next) {
   next();
 }
 
-function createError([ message, status ]) {
-  const err = new Error(message);
-
-  err.status = status;
-
-  return err;
-}
-
 function register(req, res, next) {
 
   // if (!req.body.email) {
   //   if (req.body.facebook && req.body.facebook.email) {
   //     req.body.email = req.body.facebook.email;
   //   } else {
-  //     const err = new Error(config.messages.register.missingProperties);
+  //     const err = new Error(config.errors.register.missingProperties);
   //     err.status = 422;
   //     return generateError(err);
   //   }
   // }
 
   handlers.users.count({ email: req.body.email }).then((count) => {
-    if (count) throw createError(config.errors.register.duplicateEmail);
+    if (count) throw createError(...config.errors.register.duplicateEmail);
 
     // req.body.email = req.body.email.toLowerCase();
 
@@ -198,7 +191,7 @@ function register(req, res, next) {
     return getRoles(req, req.body.email);
   })
     .then(({ roles, invite }) => {
-      if (!roles) throw createError(config.messages.register.notAuthorized);
+      if (!roles) throw createError(...config.errors.register.notAuthorized);
 
       const newUser = _.merge({}, req.body, { roles });
 
