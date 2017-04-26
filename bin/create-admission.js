@@ -27,11 +27,11 @@ function _mongo(collection, cb) {
   });
 }
 
-function createPermission(regex, roles) {
+function createAdmission(regex, roles) {
   roles = roles.split(',');
 
-  _mongo('permissions', (permission, db) => {
-    permission.insert({
+  _mongo('admissions', (admission, db) => {
+    admission.insert({
       regex: new RegExp(regex),
       roles,
       dateCreated: new Date(),
@@ -42,11 +42,11 @@ function createPermission(regex, roles) {
         console.error(err);
         process.exit(1);
       } else {
-        console.info(`${successPrefix}Created permission: ${regex} with roles ${roles.join(', ')}`);
+        console.info(`${successPrefix}Created admission: ${regex} with roles ${roles.join(', ')}`);
         process.exit(0);
       }
     });
   });
 }
 
-createPermission(...process.argv.slice(2));
+createAdmission(...process.argv.slice(2));

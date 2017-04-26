@@ -7,7 +7,7 @@ const paginate = require('midwest/factories/paginate');
 const handlers = require('./handlers');
 
 const mw = factory({
-  plural: 'permissions',
+  plural: 'admissions',
   handlers,
 });
 

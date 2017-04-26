@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": {
     "create-user": "./bin/create-user.js",
-    "create-permission": "./bin/create-permission.js",
+    "create-admission": "./bin/create-admission.js",
     "create-roles": "./bin/create-roles.js"
   },
   "scripts": {

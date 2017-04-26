@@ -21,7 +21,7 @@ const transport = nodemailer.createTransport(config.smtp);
 const handlers = {
   emailTokens: require('../email-tokens/handlers'),
   invites: require('../invites/handlers'),
-  permissions: require('../permissions/handlers'),
+  admissions: require('../admissions/handlers'),
   roles: require('../roles/handlers'),
   users: require('./handlers'),
 };
@@ -57,9 +57,9 @@ function getRoles(req, email) {
   return handlers.invites.findByEmail(email).then((invite) => {
     let roles = invite ? invite.roles : [];
 
-    return handlers.permissions.findMatches(email).then((permissions) => {
-      if (permissions) {
-        roles = _.union(roles, ...permissions.map((permission) => permission.roles));
+    return handlers.admissions.findMatches(email).then((admissions) => {
+      if (admissions) {
+        roles = _.union(roles, ...admissions.map((admission) => admission.roles));
       }
 
       return { invite, roles };
@@ -170,7 +170,6 @@ function getCurrent(req, res, next) {
 }
 
 function register(req, res, next) {
-
   // if (!req.body.email) {
   //   if (req.body.facebook && req.body.facebook.email) {
   //     req.body.email = req.body.facebook.email;

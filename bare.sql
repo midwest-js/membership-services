@@ -140,19 +140,19 @@ ALTER SEQUENCE password_tokens_id_seq OWNED BY password_tokens.id;
 
 
 --
--- Name: permission_roles; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
+-- Name: admission_roles; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
 --
 
-CREATE TABLE permission_roles (
-    permission_id integer NOT NULL,
+CREATE TABLE admission_roles (
+    admission_id integer NOT NULL,
     role_id integer NOT NULL
 );
 
 --
--- Name: permissions; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
+-- Name: admissions; Type: TABLE; Schema: public; Owner: millerkonsult_supreme
 --
 
-CREATE TABLE permissions (
+CREATE TABLE admissions (
     id integer NOT NULL,
     regex text NOT NULL,
     date_created timestamp with time zone DEFAULT now(),
@@ -161,10 +161,10 @@ CREATE TABLE permissions (
 );
 
 --
--- Name: permissions_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
+-- Name: admissions_id_seq; Type: SEQUENCE; Schema: public; Owner: millerkonsult_supreme
 --
 
-CREATE SEQUENCE permissions_id_seq
+CREATE SEQUENCE admissions_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -172,10 +172,10 @@ CREATE SEQUENCE permissions_id_seq
     CACHE 1;
 
 --
--- Name: permissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
+-- Name: admissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER SEQUENCE permissions_id_seq OWNED BY permissions.id;
+ALTER SEQUENCE admissions_id_seq OWNED BY admissions.id;
 
 
 --
@@ -282,10 +282,10 @@ ALTER TABLE ONLY password_tokens ALTER COLUMN id SET DEFAULT nextval('password_t
 
 
 --
--- Name: permissions id; Type: DEFAULT; Schema: public; Owner: millerkonsult_supreme
+-- Name: admissions id; Type: DEFAULT; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER TABLE ONLY permissions ALTER COLUMN id SET DEFAULT nextval('permissions_id_seq'::regclass);
+ALTER TABLE ONLY admissions ALTER COLUMN id SET DEFAULT nextval('admissions_id_seq'::regclass);
 
 
 --
@@ -350,19 +350,19 @@ ALTER TABLE ONLY password_tokens
     ADD CONSTRAINT password_tokens_pkey PRIMARY KEY (id);
 
 --
--- Name: permission_roles permission_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
+-- Name: admission_roles admission_roles_pkey; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER TABLE ONLY permission_roles
-    ADD CONSTRAINT permission_roles_pkey PRIMARY KEY (permission_id, role_id);
+ALTER TABLE ONLY admission_roles
+    ADD CONSTRAINT admission_roles_pkey PRIMARY KEY (admission_id, role_id);
 
 
 --
--- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
+-- Name: admissions admissions_pkey; Type: CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY admissions
+    ADD CONSTRAINT admissions_pkey PRIMARY KEY (id);
 
 
 --
@@ -452,27 +452,27 @@ ALTER TABLE ONLY password_tokens
 
 
 --
--- Name: permission_roles permission_roles_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
+-- Name: admission_roles admission_roles_admission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER TABLE ONLY permission_roles
-    ADD CONSTRAINT permission_roles_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES permissions(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: permission_roles permission_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
---
-
-ALTER TABLE ONLY permission_roles
-    ADD CONSTRAINT permission_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES roles(id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE ONLY admission_roles
+    ADD CONSTRAINT admission_roles_admission_id_fkey FOREIGN KEY (admission_id) REFERENCES admissions(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
--- Name: permissions permissions_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
+-- Name: admission_roles admission_roles_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
 --
 
-ALTER TABLE ONLY permissions
-    ADD CONSTRAINT permissions_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
+ALTER TABLE ONLY admission_roles
+    ADD CONSTRAINT admission_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES roles(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: admissions admissions_created_by_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: millerkonsult_supreme
+--
+
+ALTER TABLE ONLY admissions
+    ADD CONSTRAINT admissions_created_by_id_fkey FOREIGN KEY (created_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --

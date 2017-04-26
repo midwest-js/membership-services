@@ -9,23 +9,23 @@ const config = require('../../config');
 
 const handlers = factory({
   db: config.db,
-  table: 'permissions',
+  table: 'admissions',
   columns,
 });
 
 function findMatches(email) {
-  return handlers.getAll().then((permissions) => {
-    if (permissions) {
-      permissions = permissions.filter((permission) => {
-        const regex = new RegExp(permission.regex);
+  return handlers.getAll().then((admissions) => {
+    if (admissions) {
+      admissions = admissions.filter((admission) => {
+        const regex = new RegExp(admission.regex);
 
         return regex.test(email);
       });
 
-      if (!permissions.length) permissions = undefined;
+      if (!admissions.length) admissions = undefined;
     }
 
-    return permissions;
+    return admissions;
   });
 }
 
