@@ -60,10 +60,9 @@ function getAll(client = config.db) {
   return client.query(queries.getAll).then(many);
 }
 
-function consume(id) {
+function consume(id, client = config.db) {
   const query = 'UPDATE invites SET date_consumed = NOW() WHERE id = $1;';
 
-  // return client.query(query, [id]).then((result) => result.rowCount > 0);
   return client.query(query, [id]).then((result) => {
     if (result.rowCount === 0) throw new Error('Invite not consumed');
   });
