@@ -3,8 +3,8 @@
 const _ = require('lodash');
 
 const factory = require('midwest/factories/handlers');
-const { one, many } = require('midwest/pg/result');
-const sql = require('midwest/pg/sql-helpers');
+const { one, many } = require('easy-pg/result');
+const sql = require('easy-pg/sql-helpers');
 
 const config = require('../../config');
 
@@ -73,10 +73,18 @@ function create(json, client = config.db) {
   });
 }
 
+/* should be used to deserialize a user into a session
+ * given a user id */
+function deserialize(id, client = config.db) {
+  return client.query(queries.deserialize, [id]).then(one);
+}
+
 function findByEmail(email, client = config.db) {
   return client.query(queries.findByEmail, [email]).then(one);
 }
 
+/* should get all details required to authenticate a login request,
+ * ie password hash, if the user is blocked or banned etc. */
 function getAuthenticationDetails(email, client = config.db) {
   return client.query(queries.getAuthenticationDetails, [email]).then((result) => {
     if (!result.rows.length) throw new Error('No user found');
@@ -85,8 +93,18 @@ function getAuthenticationDetails(email, client = config.db) {
   });
 }
 
-function replace(id, json, cb) {
-  cb();
+function getPermissions(id, client = config.db) {
+  return client.query(queries.getPermissions, [id]).then(many);
+}
+
+/* should be called on successful login, should be doing stuff like
+ * setting last login date, reset unsuccessful login count etc */
+function login(user, client = config.db) {
+  return client.query(queries.login, [user.email]);
+}
+
+function replace(id, json, client = config.db) {
+  return update(id, json, client);
 }
 
 function update(id, json, client = config.db) {
@@ -129,8 +147,11 @@ function updateRoles() {
 module.exports = Object.assign(handlers.users, {
   addRoles,
   create,
+  deserialize,
   findByEmail,
   getAuthenticationDetails,
+  getPermissions,
+  login,
   replace,
   update,
   updatePassword,

@@ -1,6 +1,6 @@
 'use strict';
 
-const { h } = require('jsx-node');
+const h = require('hyperscript-jsx');
 
 module.exports = (props = {}) => (
   <table align="center" width="600">

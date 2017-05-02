@@ -8,7 +8,7 @@ const nodemailer = require('nodemailer');
 
 // modules > midwest
 const factory = require('midwest/factories/handlers');
-const { one, many } = require('midwest/pg/result');
+const { one, many } = require('easy-pg/result');
 
 // modules > project
 const config = require('../../config');

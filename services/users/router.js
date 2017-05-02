@@ -4,8 +4,6 @@ const router = new (require('express')).Router();
 
 const mw = require('./middleware');
 
-const { isAuthenticated, isAdmin } = require('../../passport/authorization-middleware');
-
 router.param('id', (req, res, next, id) => {
   if (id === 'me') return next('route');
 
@@ -13,17 +11,17 @@ router.param('id', (req, res, next, id) => {
 });
 
 router.route('/')
-  .get(isAdmin, mw.formatQuery, mw.find)
-  .post(isAdmin, mw.create);
+  .get(mw.formatQuery, mw.find)
+  .post(mw.create);
 
 router.route('/me')
-  .get(isAuthenticated, mw.getCurrent)
-  .patch(isAuthenticated, mw.getCurrent);
+  .get(mw.getCurrent)
+  .patch(mw.getCurrent);
 
 router.route('/:id')
-  .get(isAdmin, mw.findById)
-  .put(isAdmin, mw.update)
-  .patch(isAdmin, mw.update)
-  .delete(isAdmin, mw.remove);
+  .get(mw.findById)
+  .put(mw.update)
+  .patch(mw.update)
+  .delete(mw.remove);
 
 module.exports = router;

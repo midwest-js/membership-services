@@ -1,7 +1,7 @@
 'use strict';
 
 const factory = require('midwest/factories/handlers');
-const { many } = require('midwest/pg/result');
+const { many } = require('easy-pg/result');
 
 const queries = require('./sql');
 // modules > project

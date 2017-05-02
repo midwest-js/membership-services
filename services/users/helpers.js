@@ -34,15 +34,10 @@ function authenticate(password, hash) {
   return scrypt.verifyHash(password, hash);
 }
 
-function login(user, client = config.db) {
-  return client.query(queries.login, [user.email]);
-}
-
 module.exports = {
   authenticate,
   generateEmailToken,
   generatePasswordToken,
   generateToken,
   hashPassword,
-  login,
 };

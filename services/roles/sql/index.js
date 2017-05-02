@@ -1,6 +1,6 @@
 'use strict';
 
-const rsql = require('midwest/pg/require-sql');
+const rsql = require('easy-pg/require-sql');
 
 const dir = __dirname;
 

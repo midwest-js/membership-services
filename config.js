@@ -17,7 +17,7 @@ const tests = {
 };
 
 const config = require('./config-base.js');
-const errored = require('midwest/util/validate')(tests)(config);
+const errored = require('ok')(tests)(config);
 
 if (errored.length) {
   throw new Error(`Configuration is invalid: ${errored.join(', ')}`);
