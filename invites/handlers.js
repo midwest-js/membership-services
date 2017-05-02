@@ -6,7 +6,7 @@ const _ = require('lodash');
 // modules > midwest
 const factory = require('midwest/factories/handlers');
 const { one, many } = require('easy-pg/result');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 const { generateToken } = require('../users/helpers');
 const queries = require('./sql');
 

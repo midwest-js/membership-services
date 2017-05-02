@@ -7,7 +7,7 @@ const { one, many } = require('easy-pg/result');
 const sql = require('easy-pg/sql-helpers');
 
 const queries = require('./sql');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 const columns = ['id', 'email', 'dateCreated', 'dateBanned', 'dateBlocked', 'dateEmailVerified'];
 

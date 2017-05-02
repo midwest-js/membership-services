@@ -3,7 +3,7 @@
 const _ = require('lodash');
 const crypto = require('crypto');
 const scrypt = require('scrypt-for-humans');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 module.exports = _.memoize((config) => {
   function generateToken(length = config.tokenLength) {

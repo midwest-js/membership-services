@@ -2,7 +2,7 @@
 
 const _ = require('lodash');
 const express = require('express');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 module.exports = _.memoize((config) => {
   const router = new express.Router();

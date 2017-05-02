@@ -6,7 +6,7 @@ const { many } = require('easy-pg/result');
 
 const queries = require('./sql');
 // modules > project
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 const columns = ['id', 'name', 'dateCreated', 'createdById', 'dateModified'];
 

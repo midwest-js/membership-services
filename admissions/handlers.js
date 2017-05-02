@@ -4,7 +4,7 @@ const _ = require('lodash');
 const factory = require('midwest/factories/handlers');
 
 const columns = ['id', 'regex', 'dateCreated', 'createdById', 'dateModified'];
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 // modules > project
 module.exports = _.memoize((config) => {

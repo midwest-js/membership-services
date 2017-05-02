@@ -10,7 +10,7 @@ const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const factory = require('midwest/factories/rest');
 const createError = require('midwest/util/create-error');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 module.exports = _.memoize((config) => {
   const providers = config.providers || [];

@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const resolveCache = require('../../resolve-cache');
+const resolveCache = require('../resolve-cache');
 
 module.exports = _.memoize((config) => {
   const { generateToken } = require('../users/helpers')(config);
