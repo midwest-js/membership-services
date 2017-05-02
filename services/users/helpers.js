@@ -1,43 +1,43 @@
 'use strict';
 
+const _ = require('lodash');
 const crypto = require('crypto');
 const scrypt = require('scrypt-for-humans');
+const resolveCache = require('../../resolve-cache');
 
-const config = require('../../config');
+module.exports = _.memoize((config) => {
+  function generateToken(length = config.tokenLength) {
+    return crypto.randomBytes(length / 2).toString('hex');
+  }
 
-const queries = require('./sql');
+  function generatePasswordToken(email, length) {
+    return {
+      date: Date.now(),
+      token: generateToken(length),
+    };
+  }
 
-function generateToken(length = config.tokenLength) {
-  return crypto.randomBytes(length / 2).toString('hex');
-}
+  function generateEmailToken(email, length) {
+    return {
+      email,
+      token: generateToken(length),
+      date: Date.now(),
+    };
+  }
 
-function generatePasswordToken(email, length) {
+  function hashPassword(password) {
+    return scrypt.hash(password, {});
+  }
+
+  function authenticate(password, hash) {
+    return scrypt.verifyHash(password, hash);
+  }
+
   return {
-    date: Date.now(),
-    token: generateToken(length),
+    authenticate,
+    generateEmailToken,
+    generatePasswordToken,
+    generateToken,
+    hashPassword,
   };
-}
-
-function generateEmailToken(email, length) {
-  return {
-    email,
-    token: generateToken(length),
-    date: Date.now(),
-  };
-}
-
-function hashPassword(password) {
-  return scrypt.hash(password, {});
-}
-
-function authenticate(password, hash) {
-  return scrypt.verifyHash(password, hash);
-}
-
-module.exports = {
-  authenticate,
-  generateEmailToken,
-  generatePasswordToken,
-  generateToken,
-  hashPassword,
-};
+}, resolveCache());

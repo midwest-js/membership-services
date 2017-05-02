@@ -1,58 +1,62 @@
 'use strict';
 
+const _ = require('lodash');
 const factory = require('midwest/factories/rest');
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
+const resolveCache = require('../../resolve-cache');
 
-const handlers = require('./handlers');
+module.exports = _.memoize((config) => {
+  const handlers = require('./handlers')(config);
 
-const mw = factory({
-  plural: 'invites',
-  handlers: handlers,
-});
-
-function create(req, res, next) {
-  Object.assign(req.body, {
-    createdById: req.user.id,
+  const mw = factory({
+    plural: 'invites',
+    handlers: handlers,
   });
 
-  mw.create(req, res, next);
-}
+  function create(req, res, next) {
+    Object.assign(req.body, {
+      createdById: req.user.id,
+    });
 
-function getActive(req, res, next) {
-  handlers.find({ active: true }, (err, invites) => {
-    if (err) return next(err);
-
-    res.locals.invites = invites;
-
-    next();
-  });
-}
-
-function findByTokenAndEmail(req, res, next) {
-  if (!req.query.token) {
-    return next();
+    mw.create(req, res, next);
   }
 
-  handlers.findByTokenAndEmail(req.query.token, req.query.email, (err, invite) => {
-    if (!invite) {
-      return next(new Error('No invite found'));
+  function getActive(req, res, next) {
+    handlers.find({ active: true }, (err, invites) => {
+      if (err) return next(err);
+
+      res.locals.invites = invites;
+
+      next();
+    });
+  }
+
+  function findByTokenAndEmail(req, res, next) {
+    if (!req.query.token) {
+      return next();
     }
 
-    if (invite.dateConsumed) {
-      return next(new Error('Invite already consumed'));
-    }
+    handlers.findByTokenAndEmail(req.query.token, req.query.email, (err, invite) => {
+      if (!invite) {
+        return next(new Error('No invite found'));
+      }
 
-    res.status(200).locals.invite = invite;
+      if (invite.dateConsumed) {
+        return next(new Error('Invite already consumed'));
+      }
 
-    next();
+      res.status(200).locals.invite = invite;
+
+      next();
+    });
+  }
+
+  return Object.assign({}, mw, {
+    create,
+    getActive,
+    findByTokenAndEmail,
+    formatQuery: formatQuery(['limit', 'sort', 'page']),
+    paginate: paginate(handlers.count, 20),
   });
-}
-
-module.exports = Object.assign({}, mw, {
-  create,
-  getActive,
-  findByTokenAndEmail,
-  formatQuery: formatQuery(['limit', 'sort', 'page']),
-  paginate: paginate(handlers.count, 20),
-});
+}, resolveCache());

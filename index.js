@@ -1,12 +1,11 @@
 'use strict';
 
 const _ = require('lodash');
-const deepFreeze = require('deep-freeze');
+const resolveCache = require('./resolve-cache');
 
-const config = require('./config-base');
-
-exports.configure = (userConfig) => {
-  _.merge(config, userConfig);
-
-  deepFreeze(config);
-};
+module.exports = _.memoize((config) => ({
+  admissions: require('./services/admissions')(config),
+  invites: require('./services/invites')(config),
+  roles: require('./services/roles')(config),
+  users: require('./services/users')(config),
+}), resolveCache());

@@ -10,7 +10,7 @@ const p = require('path');
 require('app-module-path').addPath(p.join(PWD, 'node_modules'));
 
 const chalk = require('chalk');
-const dbFactory = require('midwest/pg/factory');
+const dbFactory = require('easy-pg');
 
 const config = {
   postgres: require(p.join(PWD, 'server/config/postgres')),
@@ -24,11 +24,9 @@ const db = dbFactory(config.postgres);
 const successPrefix = `[${chalk.green('SUCCESS')}]`;
 const errorPrefix = `[${chalk.red('ERROR')}]`;
 
-const membership = require('midwest-module-membership');
+const membership = require('midwest-module-membership')(Object.assign({ db, site: config.site, smtp: config.smtp }, config.membership));
 
-membership.configure(Object.assign({ db, site: config.site, smtp: config.smtp }, config.membership));
-
-const { create } = require('../services/users/handlers');
+const { create } = membership.users.handlers;
 
 function createUser(email, password, roles = 'admin,user') {
   if (!email || !password) {
