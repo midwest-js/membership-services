@@ -7,4 +7,4 @@ module.exports = _.memoize((config) => ({
   router: require('./router')(config),
   middleware: require('./middleware')(config),
   handlers: require('./handlers')(config),
-}), resolveCache());
+}), resolveCache);

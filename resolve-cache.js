@@ -12,22 +12,24 @@ const tests = {
 
 const ok = require('ok')(tests);
 
-module.exports = () => {
-  let previous;
+const previous = [];
 
-  return (obj) => {
-    if (previous && (!obj || _.isEqual(obj, previous))) {
-      return previous;
-    } else {
-      const errors = ok(obj);
+module.exports = (obj) => {
+  const result = obj ? previous.find((item) => _.isEqual(item, obj)) : _.last(previous);
 
-      if (errors.length) {
-        throw new Error(`Configuration is invalid: ${errors.join(', ')}`);
-      }
+  if (result) {
+    return result;
+  } else {
+    const errors = ok(obj);
 
-      previous = obj;
-
-      return obj;
+    if (errors.length) {
+      throw new Error(`Configuration is invalid: ${errors.join(', ')}`);
     }
-  };
+
+    if (obj) {
+      previous.push(obj);
+    }
+
+    return obj;
+  }
 };

@@ -268,4 +268,4 @@ module.exports = _.memoize((config) => {
     register,
     verifyEmail,
   });
-}, resolveCache());
+}, resolveCache);

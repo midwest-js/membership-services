@@ -5,12 +5,12 @@ const _ = require('lodash');
 
 // modules > midwest
 const factory = require('midwest/factories/handlers');
-const { one, many } = require('easy-pg/result');
+const { one, many } = require('easy-postgres/result');
 const resolveCache = require('../resolve-cache');
 const { generateToken } = require('../users/helpers');
 const queries = require('./sql');
 
-const columns = ['id', 'email', 'dateCreated', 'createdById', 'dateModified', 'dateConsumed', 'createdById'];
+const columns = ['id', 'email', 'createdAt', 'createdById', 'modifiedAt', 'modifiedById', 'consumedAt'];
 
 module.exports = _.memoize((config) => {
   function create(json, client = config.db) {
@@ -69,4 +69,4 @@ module.exports = _.memoize((config) => {
     getAll,
     consume,
   });
-}, resolveCache());
+}, resolveCache);

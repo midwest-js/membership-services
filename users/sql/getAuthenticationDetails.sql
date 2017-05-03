@@ -4,9 +4,9 @@ SELECT users.id,
     family_name as "familyName",
     email,
     password,
-    date_email_verified as "dateEmailVerified",
-    date_banned as "dateBanned",
-    date_blocked as "dateBlocked",
+    email_verified_at as "emailVerifiedAt",
+    banned_at as "bannedAt",
+    blocked_at as "blockedAt",
     array_agg(roles.name) as roles
   FROM users
   INNER JOIN user_roles ON users.id = user_roles.user_id

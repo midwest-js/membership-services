@@ -16,4 +16,4 @@ module.exports = _.memoize((config) => {
   return {
     create,
   };
-}, resolveCache());
+}, resolveCache);

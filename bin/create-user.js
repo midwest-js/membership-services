@@ -10,7 +10,7 @@ const p = require('path');
 require('app-module-path').addPath(p.join(PWD, 'node_modules'));
 
 const chalk = require('chalk');
-const dbFactory = require('easy-pg');
+const dbFactory = require('easy-postgres');
 
 const config = {
   postgres: require(p.join(PWD, 'server/config/postgres')),
@@ -40,7 +40,7 @@ function createUser(email, password, roles = 'admin,user') {
     email,
     password,
     roles: roles.split(','),
-    dateEmailVerified: new Date(),
+    emailVerified: new Date(),
   }).then((user) => {
     console.log(`${successPrefix} Created user ${chalk.bold.blue(user.email)} with roles ${user.roles.map((role) => chalk.bold.red(role.name)).join(', ')}`);
   }).catch(console.error).then(() => db.end());

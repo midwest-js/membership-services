@@ -8,4 +8,4 @@ module.exports = _.memoize((config) => ({
   helpers: require('./helpers')(config),
   middleware: require('./middleware')(config),
   router: require('./router')(config),
-}), resolveCache());
+}), resolveCache);

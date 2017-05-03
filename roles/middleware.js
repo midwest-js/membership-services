@@ -19,7 +19,7 @@ module.exports = _.memoize((config) => {
       const user = await req.user;
 
       Object.assign(req.body, {
-        createdById: user.id,
+        createdById: user && user.id,
       });
 
       mw.create(req, res, next);
@@ -27,4 +27,4 @@ module.exports = _.memoize((config) => {
     formatQuery: formatQuery(['limit', 'sort', 'page']),
     paginate: paginate(handlers.count, 20),
   });
-}, resolveCache());
+}, resolveCache);

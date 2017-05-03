@@ -29,15 +29,15 @@ module.exports = _.memoize((config) => {
     return scrypt.hash(password, {});
   }
 
-  function authenticate(password, hash) {
+  function checkPassword(password, hash) {
     return scrypt.verifyHash(password, hash);
   }
 
   return {
-    authenticate,
+    checkPassword,
     generateEmailToken,
     generatePasswordToken,
     generateToken,
     hashPassword,
   };
-}, resolveCache());
+}, resolveCache);

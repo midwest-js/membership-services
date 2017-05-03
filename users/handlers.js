@@ -3,13 +3,13 @@
 const _ = require('lodash');
 
 const factory = require('midwest/factories/handlers');
-const { one, many } = require('easy-pg/result');
-const sql = require('easy-pg/sql-helpers');
+const { one, many } = require('easy-postgres/result');
+const sql = require('easy-postgres/sql-helpers');
 
 const queries = require('./sql');
 const resolveCache = require('../resolve-cache');
 
-const columns = ['id', 'email', 'dateCreated', 'dateBanned', 'dateBlocked', 'dateEmailVerified'];
+const columns = ['id', 'email', 'createdAt', 'bannedAt', 'blockedAt', 'emailVerifiedAt'];
 
 module.exports = _.memoize((config) => {
   if (config.userColumns) {
@@ -156,4 +156,4 @@ module.exports = _.memoize((config) => {
     updatePassword,
     updateRoles,
   });
-}, resolveCache());
+}, resolveCache);

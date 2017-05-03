@@ -8,4 +8,4 @@ module.exports = _.memoize((config) => ({
   invites: require('./invites')(config),
   roles: require('./roles')(config),
   users: require('./users')(config),
-}), resolveCache());
+}), resolveCache);

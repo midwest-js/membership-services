@@ -29,4 +29,4 @@ module.exports = _.memoize((config) => {
     .delete(mw.remove);
 
   return router;
-}, resolveCache());
+}, resolveCache);

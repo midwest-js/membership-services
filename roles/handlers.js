@@ -2,13 +2,13 @@
 
 const _ = require('lodash');
 const factory = require('midwest/factories/handlers');
-const { many } = require('easy-pg/result');
+const { many } = require('easy-postgres/result');
 
 const queries = require('./sql');
 // modules > project
 const resolveCache = require('../resolve-cache');
 
-const columns = ['id', 'name', 'dateCreated', 'createdById', 'dateModified'];
+const columns = ['id', 'name', 'createdAt', 'createdById', 'modifiedById', 'modifiedAt'];
 
 module.exports = _.memoize((config) => {
   function findByIds(ids, client = config.db) {
@@ -24,4 +24,4 @@ module.exports = _.memoize((config) => {
     table: 'roles',
     columns,
   }), { findByIds, findByNames });
-}, resolveCache());
+}, resolveCache);
