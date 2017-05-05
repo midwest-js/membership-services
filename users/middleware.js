@@ -186,7 +186,7 @@ module.exports = _.memoize((config) => {
       const newUser = _.merge({}, req.body, { roles });
 
       // TEMP
-      if (invite) newUser.dateEmailVerified = new Date();
+      if (invite) newUser.emailVerifiedAt = new Date();
 
       return handlers.users.create(newUser).then((user) => {
         if (invite) return handlers.invites.consume(invite.id).then(() => user);

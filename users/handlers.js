@@ -50,7 +50,7 @@ module.exports = _.memoize((config) => {
       hashPassword(json.password),
     ]).then(([roles, hash]) => {
       return client.begin().then((t) => {
-        return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.dateEmailVerified])
+        return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.emailVerifiedAt])
           .then((result) => {
             const roleIds = roles.map((role) => role.id);
 

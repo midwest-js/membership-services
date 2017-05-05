@@ -24,9 +24,7 @@ const db = dbFactory(config.postgres);
 const successPrefix = `[${chalk.green('SUCCESS')}]`;
 const errorPrefix = `[${chalk.red('ERROR')}]`;
 
-const membership = require('midwest-module-membership')(Object.assign({ db, site: config.site, smtp: config.smtp }, config.membership));
-
-const { create } = membership.users.handlers;
+const { create } = require('../users/handlers')(Object.assign({ db }, config.membership));
 
 function createUser(email, password, roles = 'admin,user') {
   if (!email || !password) {
@@ -40,7 +38,7 @@ function createUser(email, password, roles = 'admin,user') {
     email,
     password,
     roles: roles.split(','),
-    emailVerified: new Date(),
+    emailVerifiedAt: new Date(),
   }).then((user) => {
     console.log(`${successPrefix} Created user ${chalk.bold.blue(user.email)} with roles ${user.roles.map((role) => chalk.bold.red(role.name)).join(', ')}`);
   }).catch(console.error).then(() => db.end());
