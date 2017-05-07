@@ -15,7 +15,11 @@ const ok = require('ok')(tests);
 const previous = [];
 
 module.exports = (obj) => {
-  const result = obj ? previous.find((item) => _.isEqual(item, obj)) : _.last(previous);
+  let result;
+
+  if (obj) {
+    result = previous.find((item) => _.isEqual(item, obj));
+  }
 
   if (result) {
     return result;
