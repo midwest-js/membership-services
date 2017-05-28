@@ -10,7 +10,7 @@ const tests = {
   },
 };
 
-const ok = require('ok')(tests);
+const ok = require('oki')(tests);
 
 const previous = [];
 
