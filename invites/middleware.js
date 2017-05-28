@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const factory = require('midwest/factories/rest');
+const factory = require('midwest/factories/rest-middleware');
 const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const resolveCache = require('../resolve-cache');
