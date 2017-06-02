@@ -9,11 +9,20 @@ const sql = require('easy-postgres/sql-helpers');
 const queries = require('./sql');
 const resolveCache = require('../resolve-cache');
 
-const columns = ['id', 'email', 'createdAt', 'bannedAt', 'blockedAt', 'emailVerifiedAt'];
+const columns = [
+  'bannedAt',
+  'blockedAt',
+  'createdAt',
+  'email',
+  'emailVerifiedAt',
+  'familyName',
+  'givenName',
+  'id',
+];
 
-module.exports = _.memoize((config) => {
-  if (config.userColumns) {
-    columns.push(...config.userColumns);
+module.exports = _.memoize((state) => {
+  if (state.config && state.config.userColumns) {
+    columns.push(...state.config.userColumns);
   }
 
   const columnsString = sql.columns(columns);
@@ -21,21 +30,22 @@ module.exports = _.memoize((config) => {
   const handlers = {
     users: factory({
       columns,
-      db: config.db,
+      db: state.db,
+      emitter: state.emitter,
       exclude: ['create', 'replace', 'update'],
       table: 'users',
     }),
-    roles: require('../roles/handlers')(config),
-    emailTokens: require('../email-tokens/handlers')(config),
+    roles: require('../roles/handlers')(state),
+    emailTokens: require('../email-tokens/handlers')(state),
   };
 
-  const { hashPassword } = require('./helpers')(config);
+  const { hashPassword } = require('./helpers')(state);
 
-  function addRoles(userId, roles, client = config.db) {
+  function addRoles(userId, roles, client = state.db) {
     return client.query(queries.addRoles, [userId, roles]).then(many);
   }
 
-  function create(json, client = config.db) {
+  function create(json, client = state.db) {
     if (!json.roles) json.roles = [];
     else if (!Array.isArray(json.roles)) json.roles = [json.roles];
 
@@ -74,17 +84,17 @@ module.exports = _.memoize((config) => {
 
   /* should be used to deserialize a user into a session
    * given a user id */
-  function deserialize(id, client = config.db) {
+  function deserialize(id, client = state.db) {
     return client.query(queries.deserialize, [id]).then(one);
   }
 
-  function findByEmail(email, client = config.db) {
+  function findByEmail(email, client = state.db) {
     return client.query(queries.findByEmail, [email]).then(one);
   }
 
   /* should get all details required to authenticate a login request,
    * ie password hash, if the user is blocked or banned etc. */
-  function getAuthenticationDetails(email, client = config.db) {
+  function getAuthenticationDetails(email, client = state.db) {
     return client.query(queries.getAuthenticationDetails, [email]).then((result) => {
       if (!result.rows.length) throw new Error('No user found');
 
@@ -92,21 +102,21 @@ module.exports = _.memoize((config) => {
     });
   }
 
-  function getPermissions(id, client = config.db) {
+  function getPermissions(id, client = state.db) {
     return client.query(queries.getPermissions, [id]).then(many);
   }
 
   /* should be called on successful login, should be doing stuff like
    * setting last login date, reset unsuccessful login count etc */
-  function login(user, client = config.db) {
+  function login(user, client = state.db) {
     return client.query(queries.login, [user.email]);
   }
 
-  function replace(id, json, client = config.db) {
+  function replace(id, json, client = state.db) {
     return update(id, json, client);
   }
 
-  function update(id, json, client = config.db) {
+  function update(id, json, client = state.db) {
     return client.begin().then((t) => {
       let roles = json.roles;
 
@@ -130,7 +140,7 @@ module.exports = _.memoize((config) => {
     });
   }
 
-  function updatePassword(id, password, client = config.db) {
+  function updatePassword(id, password, client = state.db) {
     if (!password) return Promise.reject(new Error('Password required'));
 
     const query = 'UPDATE users SET password=$2 WHERE id = $1 RETURNING id;';

@@ -12,18 +12,19 @@ const factory = require('midwest/factories/rest-middleware');
 const createError = require('midwest/util/create-error');
 const resolveCache = require('../resolve-cache');
 
-module.exports = _.memoize((config) => {
+module.exports = _.memoize((state) => {
+  const config = state.config;
   const providers = config.providers || [];
 
   const handlers = {
-    emailTokens: require('../email-tokens/handlers')(config),
-    invites: require('../invites/handlers')(config),
-    admissions: require('../admissions/handlers')(config),
-    roles: require('../roles/handlers')(config),
-    users: require('./handlers')(config),
+    emailTokens: require('../email-tokens/handlers')(state),
+    invites: require('../invites/handlers')(state),
+    admissions: require('../admissions/handlers')(state),
+    roles: require('../roles/handlers')(state),
+    users: require('./handlers')(state),
   };
 
-  const { hashPassword } = require('./helpers')(config);
+  const { hashPassword } = require('./helpers')(state);
 
   function create(req, res, next) {
     handlers.users.create(req.body, (err, user) => {

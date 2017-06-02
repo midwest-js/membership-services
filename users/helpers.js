@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const scrypt = require('scrypt-for-humans');
 const resolveCache = require('../resolve-cache');
 
-module.exports = _.memoize((config) => {
+module.exports = _.memoize(({ config = {} }) => {
   function generateToken(length = config.tokenLength) {
     return crypto.randomBytes(length / 2).toString('hex');
   }

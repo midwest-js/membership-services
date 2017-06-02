@@ -6,8 +6,8 @@ const formatQuery = require('midwest/factories/format-query');
 const paginate = require('midwest/factories/paginate');
 const resolveCache = require('../resolve-cache');
 
-module.exports = _.memoize((config) => {
-  const handlers = require('./handlers')(config);
+module.exports = _.memoize((state) => {
+  const handlers = require('./handlers')(state);
 
   const mw = factory({
     plural: 'invites',
@@ -44,7 +44,7 @@ module.exports = _.memoize((config) => {
         return next(new Error('No invite found'));
       }
 
-      if (invite.dateConsumed) {
+      if (invite.consumedAt) {
         return next(new Error('Invite already consumed'));
       }
 

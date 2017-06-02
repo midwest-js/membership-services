@@ -10,10 +10,20 @@ const resolveCache = require('../resolve-cache');
 const { generateToken } = require('../users/helpers');
 const queries = require('./sql');
 
-const columns = ['id', 'email', 'createdAt', 'createdById', 'modifiedAt', 'modifiedById', 'consumedAt'];
+const columns = [
+  'id',
+  'email',
+  'createdAt',
+  'createdById',
+  'modifiedAt',
+  'modifiedById',
+  'consumedAt',
+];
 
-module.exports = _.memoize((config) => {
-  function create(json, client = config.db) {
+module.exports = _.memoize((state) => {
+  const config = state.config;
+
+  function create(json, client = state.db) {
     const token = generateToken();
 
     const promise = client.query(queries.create, [json.email, token, json.createdById, json.roles]).then(one);
@@ -25,29 +35,29 @@ module.exports = _.memoize((config) => {
     }
   }
 
-  function find(json, client = config.db) {
+  function find(json, client = state.db) {
     const offset = Math.max(0, json.offset);
 
     return client.query(queries.find, [offset]).then(many);
   }
 
-  function findById(id, client = config.db) {
+  function findById(id, client = state.db) {
     return client.query(queries.findById, [id]).then(one);
   }
 
-  function findByEmail(email, client = config.db) {
+  function findByEmail(email, client = state.db) {
     return client.query(queries.findByEmail, [email]).then(one);
   }
 
-  function findByTokenAndEmail(token, email, client = config.db) {
+  function findByTokenAndEmail(token, email, client = state.db) {
     return client.query(queries.findByTokenAndEmail, [token, email]).then(one);
   }
 
-  function getAll(client = config.db) {
+  function getAll(client = state.db) {
     return client.query(queries.getAll).then(many);
   }
 
-  function consume(id, client = config.db) {
+  function consume(id, client = state.db) {
     const query = 'UPDATE invites SET date_consumed = NOW() WHERE id = $1;';
 
     return client.query(query, [id]).then((result) => {
@@ -56,7 +66,8 @@ module.exports = _.memoize((config) => {
   }
 
   return Object.assign(factory({
-    db: config.db,
+    emitter: state.emitter,
+    db: state.db,
     table: 'invites',
     columns,
     exclude: ['create', 'getAll', 'find', 'findById'],

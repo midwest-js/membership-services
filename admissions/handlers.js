@@ -7,9 +7,10 @@ const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt'];
 const resolveCache = require('../resolve-cache');
 
 // modules > project
-module.exports = _.memoize((config) => {
+module.exports = _.memoize((state) => {
   const handlers = factory({
-    db: config.db,
+    db: state.db,
+    emitter: state.emitter,
     table: 'admissions',
     columns,
   });

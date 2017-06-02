@@ -4,9 +4,9 @@ const _ = require('lodash');
 const express = require('express');
 const resolveCache = require('../resolve-cache');
 
-module.exports = _.memoize((config) => {
+module.exports = _.memoize((state) => {
   const router = new express.Router();
-  const mw = require('./middleware')(config);
+  const mw = require('./middleware')(state);
 
   router.route('/')
     .get(mw.formatQuery, mw.paginate, mw.find)

@@ -3,10 +3,10 @@
 const _ = require('lodash');
 const resolveCache = require('../resolve-cache');
 
-module.exports = _.memoize((config) => {
-  const { generateToken } = require('../users/helpers')(config);
+module.exports = _.memoize((state) => {
+  const { generateToken } = require('../users/helpers')(state);
 
-  function create(json, client = config.db) {
+  function create(json, client = state.db) {
     const token = generateToken();
 
     return client.query('INSERT INTO email_tokens (user_id, email, token) VALUES ($1, $2, $3) RETURNING token;',

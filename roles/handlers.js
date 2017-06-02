@@ -10,17 +10,18 @@ const resolveCache = require('../resolve-cache');
 
 const columns = ['id', 'name', 'createdAt', 'createdById', 'modifiedById', 'modifiedAt'];
 
-module.exports = _.memoize((config) => {
-  function findByIds(ids, client = config.db) {
+module.exports = _.memoize((state) => {
+  function findByIds(ids, client = state.db) {
     return client.query(queries.findByIds, [ids]).then(many);
   }
 
-  function findByNames(names, client = config.db) {
+  function findByNames(names, client = state.db) {
     return client.query(queries.findByNames, [names]).then(many);
   }
 
   return Object.assign(factory({
-    db: config.db,
+    emitter: state.emitter,
+    db: state.db,
     table: 'roles',
     columns,
   }), { findByIds, findByNames });

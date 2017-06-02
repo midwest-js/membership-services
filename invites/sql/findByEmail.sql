@@ -2,7 +2,7 @@ SELECT
     id,
     email,
     token,
-    date_consumed AS "dateConsumed",
+    consumed_at AS "consumedAt",
     array(
       SELECT id FROM invite_roles LEFT OUTER JOIN roles ON invite_roles.role_id = roles.id WHERE invite_roles.invite_id = invites.id
     ) as roles
