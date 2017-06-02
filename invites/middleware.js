@@ -1,57 +1,57 @@
-'use strict';
+'use strict'
 
-const _ = require('lodash');
-const factory = require('midwest/factories/rest-middleware');
-const formatQuery = require('midwest/factories/format-query');
-const paginate = require('midwest/factories/paginate');
-const resolveCache = require('../resolve-cache');
+const _ = require('lodash')
+const factory = require('midwest/factories/rest-middleware')
+const formatQuery = require('midwest/factories/format-query')
+const paginate = require('midwest/factories/paginate')
+const resolveCache = require('../resolve-cache')
 
 module.exports = _.memoize((state) => {
-  const handlers = require('./handlers')(state);
+  const handlers = require('./handlers')(state)
 
   const mw = factory({
     plural: 'invites',
-    handlers,
-  });
+    handlers
+  })
 
-  async function create(req, res, next) {
-    const user = await req.user;
+  async function create (req, res, next) {
+    const user = await req.user
 
     Object.assign(req.body, {
-      createdById: user && user.id,
-    });
+      createdById: user && user.id
+    })
 
-    mw.create(req, res, next);
+    mw.create(req, res, next)
   }
 
-  function getActive(req, res, next) {
+  function getActive (req, res, next) {
     handlers.find({ active: true }, (err, invites) => {
-      if (err) return next(err);
+      if (err) return next(err)
 
-      res.locals.invites = invites;
+      res.locals.invites = invites
 
-      next();
-    });
+      next()
+    })
   }
 
-  function findByTokenAndEmail(req, res, next) {
+  function findByTokenAndEmail (req, res, next) {
     if (!req.query.token) {
-      return next();
+      return next()
     }
 
-    handlers.findByTokenAndEmail(req.query.token, req.query.email, (err, invite) => {
+    handlers.findByTokenAndEmail(req.query.token, req.query.email).then((invite) => {
       if (!invite) {
-        return next(new Error('No invite found'));
+        return next(new Error('No invite found'))
       }
 
       if (invite.consumedAt) {
-        return next(new Error('Invite already consumed'));
+        return next(new Error('Invite already consumed'))
       }
 
-      res.status(200).locals.invite = invite;
+      res.status(200).locals.invite = invite
 
-      next();
-    });
+      next()
+    }).catch(next)
   }
 
   return Object.assign({}, mw, {
@@ -59,6 +59,6 @@ module.exports = _.memoize((state) => {
     getActive,
     findByTokenAndEmail,
     formatQuery: formatQuery(['limit', 'sort', 'page']),
-    paginate: paginate(handlers.count, 20),
-  });
-}, resolveCache);
+    paginate: paginate(handlers.count, 20)
+  })
+}, resolveCache)

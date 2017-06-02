@@ -1,8 +1,8 @@
-'use strict';
+'use strict'
 
-const rsql = require('easy-postgres/require-sql');
+const rsql = require('easy-postgres/require-sql')
 
-const dir = __dirname;
+const dir = __dirname
 
 module.exports = {
   addRoles: rsql('./addRoles.sql', dir),
@@ -14,5 +14,5 @@ module.exports = {
   getAll: rsql('./getAll.sql', dir),
   getAuthenticationDetails: rsql('./getAuthenticationDetails.sql', dir),
   login: rsql('./login.sql', dir),
-  updateRoles: rsql('./updateRoles.sql', dir),
-};
+  updateRoles: rsql('./updateRoles.sql', dir)
+}

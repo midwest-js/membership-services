@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
-const _ = require('lodash');
-const factory = require('midwest/factories/rest-handlers');
+const _ = require('lodash')
+const factory = require('midwest/factories/rest-handlers')
 
-const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt'];
-const resolveCache = require('../resolve-cache');
+const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt']
+const resolveCache = require('../resolve-cache')
 
 // modules > project
 module.exports = _.memoize((state) => {
@@ -12,27 +12,26 @@ module.exports = _.memoize((state) => {
     db: state.db,
     emitter: state.emitter,
     table: 'admissions',
-    columns,
-  });
+    columns
+  })
 
-  function findMatches(email) {
+  function findMatches (email) {
     return handlers.getAll().then((admissions) => {
       if (admissions) {
         admissions = admissions.filter((admission) => {
-          const regex = new RegExp(admission.regex);
+          const regex = new RegExp(admission.regex)
 
-          return regex.test(email);
-        });
+          return regex.test(email)
+        })
 
-        if (!admissions.length) admissions = undefined;
+        if (!admissions.length) admissions = undefined
       }
 
-      return admissions;
-    });
+      return admissions
+    })
   }
 
   return Object.assign(handlers, {
-    findMatches,
-  });
-}, resolveCache);
-
+    findMatches
+  })
+}, resolveCache)

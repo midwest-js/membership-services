@@ -1,36 +1,36 @@
-'use strict';
+'use strict'
 
-const _ = require('lodash');
-const crypto = require('crypto');
-const scrypt = require('scrypt-for-humans');
-const resolveCache = require('../resolve-cache');
+const _ = require('lodash')
+const crypto = require('crypto')
+const scrypt = require('scrypt-for-humans')
+const resolveCache = require('../resolve-cache')
 
 module.exports = _.memoize(({ config = {} }) => {
-  function generateToken(length = config.tokenLength) {
-    return crypto.randomBytes(length / 2).toString('hex');
+  function generateToken (length = config.tokenLength) {
+    return crypto.randomBytes(length / 2).toString('hex')
   }
 
-  function generatePasswordToken(email, length) {
+  function generatePasswordToken (email, length) {
     return {
       date: Date.now(),
-      token: generateToken(length),
-    };
+      token: generateToken(length)
+    }
   }
 
-  function generateEmailToken(email, length) {
+  function generateEmailToken (email, length) {
     return {
       email,
       token: generateToken(length),
-      date: Date.now(),
-    };
+      date: Date.now()
+    }
   }
 
-  function hashPassword(password) {
-    return scrypt.hash(password, {});
+  function hashPassword (password) {
+    return scrypt.hash(password, {})
   }
 
-  function checkPassword(password, hash) {
-    return scrypt.verifyHash(password, hash);
+  function checkPassword (password, hash) {
+    return scrypt.verifyHash(password, hash)
   }
 
   return {
@@ -38,6 +38,6 @@ module.exports = _.memoize(({ config = {} }) => {
     generateEmailToken,
     generatePasswordToken,
     generateToken,
-    hashPassword,
-  };
-}, resolveCache);
+    hashPassword
+  }
+}, resolveCache)
