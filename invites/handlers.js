@@ -58,10 +58,10 @@ module.exports = _.memoize((state) => {
   }
 
   function consume (id, client = state.db) {
-    const query = 'UPDATE invites SET date_consumed = NOW() WHERE id = $1;'
+    const query = 'UPDATE invites SET consumed_at = NOW() WHERE id = $1;'
 
     return client.query(query, [id]).then((result) => {
-      if (result.rowCount === 0) throw new Error('Invite not consumed')
+      if (result.rowCount === 0) throw new Error('Error consuming invite')
     })
   }
 
