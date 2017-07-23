@@ -10,5 +10,5 @@ module.exports = {
   findByEmail: rsql('./findByEmail.sql', dir),
   findById: rsql('./findById.sql', dir),
   findByTokenAndEmail: rsql('./findByTokenAndEmail.sql', dir),
-  getAll: rsql('./getAll.sql', dir)
+  getAll: rsql('./getAll.sql', dir),
 }

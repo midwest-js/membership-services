@@ -13,7 +13,7 @@ module.exports = _.memoize(({ config = {} }) => {
   function generatePasswordToken (email, length) {
     return {
       date: Date.now(),
-      token: generateToken(length)
+      token: generateToken(length),
     }
   }
 
@@ -21,7 +21,7 @@ module.exports = _.memoize(({ config = {} }) => {
     return {
       email,
       token: generateToken(length),
-      date: Date.now()
+      date: Date.now(),
     }
   }
 
@@ -38,6 +38,6 @@ module.exports = _.memoize(({ config = {} }) => {
     generateEmailToken,
     generatePasswordToken,
     generateToken,
-    hashPassword
+    hashPassword,
   }
 }, resolveCache)

@@ -18,7 +18,7 @@ module.exports = _.memoize((state) => {
     invites: require('../invites/handlers')(state),
     admissions: require('../admissions/handlers')(state),
     roles: require('../roles/handlers')(state),
-    users: require('./handlers')(state)
+    users: require('./handlers')(state),
   }
 
   const { hashPassword } = require('./helpers')(state)
@@ -89,7 +89,7 @@ module.exports = _.memoize((state) => {
 
       if (!user) {
         return sendError(Object.assign(new Error('Incorrect token and/or email'), {
-          status: 404
+          status: 404,
         }))
       }
 
@@ -140,7 +140,7 @@ module.exports = _.memoize((state) => {
       }
 
       const query = {
-        [property]: req.find[property]
+        [property]: req.find[property],
       }
 
       handlers.users.count(query, (err, count) => {
@@ -249,7 +249,7 @@ module.exports = _.memoize((state) => {
 
   return Object.assign(factory({
     plural: 'users',
-    handlers: handlers.users
+    handlers: handlers.users,
   }), {
     resetPasswordWithToken,
     checkPasswordToken,
@@ -258,11 +258,11 @@ module.exports = _.memoize((state) => {
     formatQuery: formatQuery(['limit', 'sort', 'page', 'isBanned', 'isBlocked', 'isMuted', 'isVerified', 'isEmailVerified'], {
       username: 'regex',
       givenName: 'regex',
-      familyName: 'regex'
+      familyName: 'regex',
     }),
     getCurrent,
     paginate: paginate(handlers.users.count, 20),
     register,
-    verifyEmail
+    verifyEmail,
   })
 }, resolveCache)

@@ -17,7 +17,7 @@ const columns = [
   'emailVerifiedAt',
   'familyName',
   'givenName',
-  'id'
+  'id',
 ]
 
 module.exports = _.memoize((state) => {
@@ -33,9 +33,9 @@ module.exports = _.memoize((state) => {
       db: state.db,
       emitter: state.emitter,
       exclude: ['create', 'replace', 'update'],
-      table: 'users'
+      table: 'users',
     }),
-    roles: require('../roles/handlers')(state)
+    roles: require('../roles/handlers')(state),
   }
 
   const { hashPassword } = require('./helpers')(state)
@@ -56,7 +56,7 @@ module.exports = _.memoize((state) => {
 
     return Promise.all([
       rolesPromise,
-      hashPassword(json.password)
+      hashPassword(json.password),
     ]).then(([roles, hash]) => {
       return client.begin().then((t) => {
         return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.emailVerifiedAt])
@@ -68,7 +68,7 @@ module.exports = _.memoize((state) => {
             return Promise.all([
               addRoles(user.id, roleIds, t),
               handlers.emailTokens.create({ userId: user.id, email: user.email }, t),
-              handlers.roles.findByIds(roleIds)
+              handlers.roles.findByIds(roleIds),
             ])
               .then((result) => t.commit().then(() => result))
               .then(([, token, roles]) => {
@@ -163,6 +163,6 @@ module.exports = _.memoize((state) => {
     replace,
     update,
     updatePassword,
-    updateRoles
+    updateRoles,
   })
 }, resolveCache)

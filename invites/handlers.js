@@ -17,7 +17,7 @@ const columns = [
   'createdById',
   'modifiedAt',
   'modifiedById',
-  'consumedAt'
+  'consumedAt',
 ]
 
 module.exports = _.memoize((state) => {
@@ -70,7 +70,7 @@ module.exports = _.memoize((state) => {
     db: state.db,
     table: 'invites',
     columns,
-    exclude: ['create', 'getAll', 'find', 'findById']
+    exclude: ['create', 'getAll', 'find', 'findById'],
   }), {
     create,
     find,
@@ -78,6 +78,6 @@ module.exports = _.memoize((state) => {
     findById,
     findByTokenAndEmail,
     getAll,
-    consume
+    consume,
   })
 }, resolveCache)

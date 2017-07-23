@@ -23,6 +23,6 @@ module.exports = _.memoize((state) => {
     emitter: state.emitter,
     db: state.db,
     table: 'roles',
-    columns
+    columns,
   }), { findByIds, findByNames })
 }, resolveCache)

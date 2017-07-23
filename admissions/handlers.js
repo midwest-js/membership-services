@@ -12,7 +12,7 @@ module.exports = _.memoize((state) => {
     db: state.db,
     emitter: state.emitter,
     table: 'admissions',
-    columns
+    columns,
   })
 
   function findMatches (email) {
@@ -32,6 +32,6 @@ module.exports = _.memoize((state) => {
   }
 
   return Object.assign(handlers, {
-    findMatches
+    findMatches,
   })
 }, resolveCache)

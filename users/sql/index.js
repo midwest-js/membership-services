@@ -14,5 +14,5 @@ module.exports = {
   getAll: rsql('./getAll.sql', dir),
   getAuthenticationDetails: rsql('./getAuthenticationDetails.sql', dir),
   login: rsql('./login.sql', dir),
-  updateRoles: rsql('./updateRoles.sql', dir)
+  updateRoles: rsql('./updateRoles.sql', dir),
 }

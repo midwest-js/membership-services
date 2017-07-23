@@ -11,7 +11,7 @@ module.exports = _.memoize((state) => {
 
   const mw = factory({
     plural: 'roles',
-    handlers
+    handlers,
   })
 
   return Object.assign({}, mw, {
@@ -19,12 +19,12 @@ module.exports = _.memoize((state) => {
       const user = await req.user
 
       Object.assign(req.body, {
-        createdById: user && user.id
+        createdById: user && user.id,
       })
 
       mw.create(req, res, next)
     },
     formatQuery: formatQuery(['limit', 'sort', 'page']),
-    paginate: paginate(handlers.count, 20)
+    paginate: paginate(handlers.count, 20),
   })
 }, resolveCache)

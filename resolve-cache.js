@@ -7,7 +7,7 @@ const tests = {
     const keys = ['query', 'connect', 'begin']
 
     return keys.every((key) => _.has(value, key))
-  }
+  },
 }
 
 const ok = require('oki')(tests)
