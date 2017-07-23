@@ -35,8 +35,7 @@ module.exports = _.memoize((state) => {
       exclude: ['create', 'replace', 'update'],
       table: 'users'
     }),
-    roles: require('../roles/handlers')(state),
-    emailTokens: require('../email-tokens/handlers')(state)
+    roles: require('../roles/handlers')(state)
   }
 
   const { hashPassword } = require('./helpers')(state)
