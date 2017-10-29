@@ -18,10 +18,6 @@ module.exports = _.memoize((state) => {
     .get(mw.formatQuery, mw.find)
     .post(mw.create)
 
-  router.route('/me')
-    .get(mw.getCurrent)
-    .patch(mw.getCurrent)
-
   router.route('/:id')
     .get(mw.findById)
     .put(mw.update)
