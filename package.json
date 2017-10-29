@@ -25,22 +25,22 @@
   },
   "homepage": "https://github.com/thebitmill/midwest-membership-services#readme",
   "dependencies": {
-    "chalk": "^1.1.3",
-    "deep-equal-resolver": "0.0.1",
-    "express": "^4.15.3",
+    "chalk": "^2.3.0",
+    "deep-equal-resolver": "0.0.2",
+    "express": "^4.16.2",
     "lodash": "^4.17.4",
     "midwest": "^0.4.2",
     "oki": "0.0.1",
     "require-dir": "^0.3.2",
     "scrypt-for-humans": "^2.0.5",
-    "validator": "^7.0.0"
+    "validator": "^9.1.1"
   },
   "devDependencies": {
-    "eslint": "^3.19.0",
+    "eslint": "^4.10.0",
     "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.3.0",
-    "eslint-plugin-node": "^5.0.0",
-    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1"
   }
 }

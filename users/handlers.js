@@ -5,10 +5,10 @@ const _ = require('lodash')
 const factory = require('midwest/factories/rest-handlers')
 const { one, many } = require('easy-postgres/result')
 const sql = require('easy-postgres/sql-helpers')
+const resolver = require('deep-equal-resolver')()
 const Promise = require('bluebird')
 
 const queries = require('./sql')
-const resolveCache = require('../resolve-cache')
 
 const defaultColumns = [
   'bannedAt',
@@ -138,4 +138,4 @@ module.exports = _.memoize((state) => {
     replace,
     update,
   })
-}, resolveCache)
+}, resolver)

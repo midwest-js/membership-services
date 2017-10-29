@@ -9,7 +9,7 @@ const _ = require('lodash')
 // modules > midwest
 const factory = require('midwest/factories/rest-handlers')
 const { one, many } = require('easy-postgres/result')
-const resolveCache = require('../resolve-cache')
+const resolver = require('deep-equal-resolver')()
 const queries = require('./sql')
 
 const columns = [
@@ -86,4 +86,4 @@ module.exports = _.memoize((state) => {
     getAll,
     consume,
   })
-}, resolveCache)
+}, resolver)

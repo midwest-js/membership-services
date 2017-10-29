@@ -6,7 +6,7 @@ const { many } = require('easy-postgres/result')
 
 const queries = require('./sql')
 // modules > project
-const resolveCache = require('../resolve-cache')
+const resolver = require('deep-equal-resolver')()
 
 const columns = ['id', 'name', 'createdAt', 'createdById', 'modifiedById', 'modifiedAt']
 
@@ -25,4 +25,4 @@ module.exports = _.memoize((state) => {
     table: 'roles',
     columns,
   }), { findByIds, findByNames })
-}, resolveCache)
+}, resolver)

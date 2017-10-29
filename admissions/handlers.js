@@ -4,7 +4,7 @@ const _ = require('lodash')
 const factory = require('midwest/factories/rest-handlers')
 
 const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt']
-const resolveCache = require('../resolve-cache')
+const resolver = require('deep-equal-resolver')()
 
 // modules > project
 module.exports = _.memoize((state) => {
@@ -34,4 +34,4 @@ module.exports = _.memoize((state) => {
   return Object.assign(handlers, {
     findMatches,
   })
-}, resolveCache)
+}, resolver)
