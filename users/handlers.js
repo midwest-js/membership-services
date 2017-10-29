@@ -5,24 +5,34 @@ const _ = require('lodash')
 const factory = require('midwest/factories/rest-handlers')
 const { one, many } = require('easy-postgres/result')
 const sql = require('easy-postgres/sql-helpers')
+const Promise = require('bluebird')
 
 const queries = require('./sql')
 const resolveCache = require('../resolve-cache')
 
-const columns = [
+const defaultColumns = [
   'bannedAt',
+  'bannedById',
   'blockedAt',
+  'blockedById',
   'createdAt',
   'email',
   'emailVerifiedAt',
   'familyName',
   'givenName',
   'id',
+  'lastActivityAt',
+  'lastLoginAt',
+  'loginAttemps',
 ]
 
 module.exports = _.memoize((state) => {
+  let columns
+
   if (state.config && state.config.userColumns) {
-    columns.push(...state.config.userColumns)
+    columns = defaultColumns.concat(state.config.userColumns)
+  } else {
+    columns = defaultColumns
   }
 
   const columnsString = sql.columns(columns)
@@ -38,77 +48,59 @@ module.exports = _.memoize((state) => {
     roles: require('../roles/handlers')(state),
   }
 
-  const { hashPassword } = require('./helpers')(state)
-
   function addRoles (userId, roles, client = state.db) {
-    return client.query(queries.addRoles, [userId, roles]).then(many)
-  }
+    if (!roles || roles.length === 0) {
+      return Promise.resolve([])
+    } else if (!Array.isArray(roles)) {
+      roles = [roles]
+    }
 
-  function create (json, client = state.db) {
-    if (!json.roles) json.roles = []
-    else if (!Array.isArray(json.roles)) json.roles = [json.roles]
+    let promise
 
-    let rolesPromise
+    if (typeof roles[0] === 'string') {
+      promise = handlers.roles.findByNames(roles)
+    } else if (typeof roles[0] === 'number') {
+      promise = handlers.roles.findByIds(roles)
+    } else {
+      promise = Promise.resolve(roles)
+    }
 
-    if (typeof json.roles[0] === 'string') rolesPromise = handlers.roles.findByNames(json.roles)
-    else if (typeof json.roles[0] === 'number') rolesPromise = handlers.roles.findByIds(json.roles)
-    else rolesPromise = Promise.resolve(json.roles)
+    return promise.then((roles) => {
+      roles = roles.map((role) => role.id)
 
-    return Promise.all([
-      rolesPromise,
-      hashPassword(json.password),
-    ]).then(([roles, hash]) => {
-      return client.begin().then((t) => {
-        return t.query(queries.create, [json.givenName, json.familyName, json.email, hash, json.emailVerifiedAt])
-          .then((result) => {
-            const roleIds = roles.map((role) => role.id)
-
-            const user = result.rows[0]
-
-            return Promise.all([
-              addRoles(user.id, roleIds, t),
-              handlers.emailTokens.create({ userId: user.id, email: user.email }, t),
-              handlers.roles.findByIds(roleIds),
-            ])
-              .then((result) => t.commit().then(() => result))
-              .then(([, token, roles]) => {
-                user.roles = roles
-                user.emailToken = token
-                return user
-              })
-          })
-      })
+      return client.query(queries.addRoles, [userId, roles]).then(many)
     })
   }
 
-  /* should be used to deserialize a user into a session
-   * given a user id */
-  function deserialize (id, client = state.db) {
-    return client.query(queries.deserialize, [id]).then(one)
+  function __create (json, t) {
+    return t.query(queries.create, [json.givenName, json.familyName, json.email, json.password, json.emailVerifiedAt])
+      .then((result) => {
+        const user = result.rows[0]
+
+        return addRoles(user.id, json.roles, t)
+          .then((roles) => {
+            user.roles = roles
+            return user
+          })
+      })
+  }
+
+  function create (json, client = state.db) {
+    if (typeof client.commit === 'function') {
+      return __create(json, client)
+    } else {
+      return client.begin()
+        .then((t) => {
+          return __create(json, t)
+            .then((result) => {
+              return t.commit().then(() => result)
+            })
+        })
+    }
   }
 
   function findByEmail (email, client = state.db) {
     return client.query(queries.findByEmail, [email]).then(one)
-  }
-
-  /* should get all details required to authenticate a login request,
-   * ie password hash, if the user is blocked or banned etc. */
-  function getAuthenticationDetails (email, client = state.db) {
-    return client.query(queries.getAuthenticationDetails, [email]).then((result) => {
-      if (!result.rows.length) throw new Error('No user found')
-
-      return result.rows[0]
-    })
-  }
-
-  function getPermissions (id, client = state.db) {
-    return client.query(queries.getPermissions, [id]).then(many)
-  }
-
-  /* should be called on successful login, should be doing stuff like
-   * setting last login date, reset unsuccessful login count etc */
-  function login (user, client = state.db) {
-    return client.query(queries.login, [user.email])
   }
 
   function replace (id, json, client = state.db) {
@@ -139,30 +131,11 @@ module.exports = _.memoize((state) => {
     })
   }
 
-  function updatePassword (id, password, client = state.db) {
-    if (!password) return Promise.reject(new Error('Password required'))
-
-    const query = 'UPDATE users SET password=$2 WHERE id = $1 RETURNING id;'
-
-    // TODO maybe throw error if not updated properly
-    return client.query(query, [id, password]).then((result) => !!result.rows[0].id)
-  }
-
-  function updateRoles () {
-
-  }
-
   return Object.assign(handlers.users, {
     addRoles,
     create,
-    deserialize,
     findByEmail,
-    getAuthenticationDetails,
-    getPermissions,
-    login,
     replace,
     update,
-    updatePassword,
-    updateRoles,
   })
 }, resolveCache)
