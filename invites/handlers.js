@@ -1,5 +1,8 @@
 'use strict'
 
+// modules > native
+const crypto = require('crypto')
+
 // modules > 3rd party
 const _ = require('lodash')
 
@@ -7,7 +10,6 @@ const _ = require('lodash')
 const factory = require('midwest/factories/rest-handlers')
 const { one, many } = require('easy-postgres/result')
 const resolveCache = require('../resolve-cache')
-const { generateToken } = require('../users/helpers')
 const queries = require('./sql')
 
 const columns = [
@@ -19,6 +21,10 @@ const columns = [
   'modifiedById',
   'consumedAt',
 ]
+
+function generateToken (length = 64) {
+  return crypto.randomBytes(length / 2).toString('hex')
+}
 
 module.exports = _.memoize((state) => {
   const config = state.config
