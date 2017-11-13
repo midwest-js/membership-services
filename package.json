@@ -3,11 +3,6 @@
   "version": "0.3.0",
   "description": "",
   "main": "index.js",
-  "bin": {
-    "create-user": "./bin/create-user.js",
-    "create-admission": "./bin/create-admission.js",
-    "create-roles": "./bin/create-roles.js"
-  },
   "scripts": {
     "lint": "eslint --ignore-pattern dump .",
     "test": "echo \"Error: no test specified\" && exit 1",
