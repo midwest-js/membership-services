@@ -23,7 +23,7 @@ const defaultColumns = [
   'id',
   'lastActivityAt',
   'lastLoginAt',
-  'loginAttemps',
+  'loginAttempts',
 ]
 
 module.exports = _.memoize((state) => {
