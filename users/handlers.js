@@ -103,6 +103,14 @@ module.exports = _.memoize((state) => {
     return client.query(queries.findByEmail, [email]).then(one)
   }
 
+  function onActivity (id, client = state.db) {
+    return update(id, { lastActivityAt: 'now()' })
+  }
+
+  function onLogin (id, client = state.db) {
+    return update(id, { lastLoginAt: 'now()', loginAttempts: 0 })
+  }
+
   function replace (id, json, client = state.db) {
     return update(id, json, client)
   }
@@ -135,6 +143,8 @@ module.exports = _.memoize((state) => {
     addRoles,
     create,
     findByEmail,
+    onActivity,
+    onLogin,
     replace,
     update,
   })
