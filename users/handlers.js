@@ -3,8 +3,8 @@
 const _ = require('lodash')
 
 const factory = require('midwest/factories/rest-handlers')
-const { one, many } = require('easy-postgres/result')
-const sql = require('easy-postgres/sql-helpers')
+const { one, many } = require('@bmp/pg/result')
+const sql = require('@bmp/pg/sql-helpers')
 const resolver = require('deep-equal-resolver')()
 const Promise = require('bluebird')
 

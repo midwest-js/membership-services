@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/thebitmill/midwest-membership-services#readme",
   "dependencies": {
+    "@bmp/pg": "0.0.3",
     "chalk": "^2.3.0",
     "deep-equal-resolver": "0.0.2",
     "express": "^4.16.2",

@@ -1,6 +1,6 @@
 'use strict'
 
-const rsql = require('easy-postgres/require-sql')
+const rsql = require('@bmp/pg/require-sql')
 
 const dir = __dirname
 

@@ -8,7 +8,7 @@ const _ = require('lodash')
 
 // modules > midwest
 const factory = require('midwest/factories/rest-handlers')
-const { one, many } = require('easy-postgres/result')
+const { one, many } = require('@bmp/pg/result')
 const resolver = require('deep-equal-resolver')()
 const queries = require('./sql')
 
