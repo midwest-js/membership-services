@@ -1,7 +1,7 @@
 'use strict'
 
 const _ = require('lodash')
-const factory = require('midwest/factories/rest-handlers')
+const factory = require('@bmp/pg/handlers')
 const { many } = require('@bmp/pg/result')
 
 const queries = require('./sql')
