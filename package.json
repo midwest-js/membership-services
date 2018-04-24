@@ -28,7 +28,6 @@
     "midwest": "^0.4.2",
     "oki": "0.0.2",
     "require-dir": "^1.0.0",
-    "scrypt-for-humans": "^2.0.5",
     "validator": "^9.4.1"
   },
   "devDependencies": {
