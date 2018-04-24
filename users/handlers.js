@@ -18,8 +18,6 @@ const defaultColumns = [
   'createdAt',
   'email',
   'emailVerifiedAt',
-  'familyName',
-  'givenName',
   'id',
   'lastActivityAt',
   'lastLoginAt',
@@ -27,14 +25,9 @@ const defaultColumns = [
 ]
 
 module.exports = _.memoize((state) => {
-  let columns
+  const customColumns = _.get(state, 'config.services.users.columns') || _.get(state, 'config.userColumns')
 
-  if (state.config && state.config.userColumns) {
-    columns = defaultColumns.concat(state.config.userColumns)
-  } else {
-    columns = defaultColumns
-  }
-
+  const columns = customColumns ? defaultColumns.concat(customColumns) : defaultColumns
   const columnsString = sql.columns(columns)
 
   const handlers = {
