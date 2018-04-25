@@ -2,9 +2,11 @@
 
 const _ = require('lodash')
 const factory = require('@bmp/pg/handlers')
+const { many } = require('@bmp/pg/result')
 
 const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt']
 const resolver = require('deep-equal-resolver')()
+const queries = require('./sql')
 
 // modules > project
 module.exports = _.memoize((state) => {
@@ -15,8 +17,8 @@ module.exports = _.memoize((state) => {
     columns,
   })
 
-  function findMatches (email) {
-    return handlers.getAll().then((admissions) => {
+  function findMatches (email, client = state.db) {
+    return client.query(queries.getAll).then(many).then((admissions) => {
       if (admissions) {
         admissions = admissions.filter((admission) => {
           const regex = new RegExp(admission.regex)
