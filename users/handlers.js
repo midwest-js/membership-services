@@ -4,7 +4,6 @@ const _ = require('lodash')
 
 const factory = require('@bmp/pg/handlers')
 const { one, many } = require('@bmp/pg/result')
-const sql = require('@bmp/pg/sql-helpers')
 const resolver = require('deep-equal-resolver')()
 const Promise = require('bluebird')
 
@@ -22,20 +21,20 @@ const defaultColumns = [
   'lastActivityAt',
   'lastLoginAt',
   'loginAttempts',
+  'password',
 ]
 
 module.exports = _.memoize((state) => {
   const customColumns = _.get(state, 'config.services.users.columns') || _.get(state, 'config.userColumns')
 
   const columns = customColumns ? defaultColumns.concat(customColumns) : defaultColumns
-  const columnsString = sql.columns(columns)
 
   const handlers = {
     users: factory({
       columns,
       db: state.db,
       emitter: state.emitter,
-      exclude: ['create', 'replace', 'update'],
+      exclude: ['replace'],
       table: 'users',
     }),
     roles: require('../roles/handlers')(state),
@@ -59,17 +58,15 @@ module.exports = _.memoize((state) => {
     }
 
     return promise.then((roles) => {
-      roles = roles.map((role) => role.id)
+      roles = roles.map((role) => role.id || role)
 
       return client.query(queries.addRoles, [userId, roles]).then(many)
     })
   }
 
   function __create (json, t) {
-    return t.query(queries.create, [json.givenName, json.familyName, json.email, json.password, json.emailVerifiedAt])
-      .then((result) => {
-        const user = result.rows[0]
-
+    return handlers.users.create(json)
+      .then((user) => {
         return addRoles(user.id, json.roles, t)
           .then((roles) => {
             user.roles = roles
@@ -110,19 +107,9 @@ module.exports = _.memoize((state) => {
 
   function update (id, json, client = state.db) {
     return client.begin().then((t) => {
-      let roles = json.roles
+      return handlers.users.update(id, _.omit(json, [ 'roles' ]), t).then((result) => {
+        let roles = json.roles
 
-      json = _.pickBy(json, (value, key) => key !== 'roles' && columns.includes(key))
-
-      const keys = _.keys(json).map((key) => `"${_.snakeCase(key)}"`)
-
-      if (!keys.length && !roles) return Promise.reject(new Error('No allowed parameters received'))
-
-      const values = _.values(json)
-
-      const query = `UPDATE users SET ${keys.map((key, i) => `${key}=$${i + 1}`).join(', ')} WHERE id = $${keys.length + 1} RETURNING ${columnsString};`
-
-      return t.query(query, [...values, id]).then(() => {
         if (roles && roles.length) {
           if (typeof roles[0] === 'object') roles = roles.map((role) => role.id)
 
@@ -132,7 +119,7 @@ module.exports = _.memoize((state) => {
     })
   }
 
-  return Object.assign(handlers.users, {
+  return Object.assign({}, handlers.users, {
     addRoles,
     create,
     findByEmail,
