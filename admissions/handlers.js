@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 const factory = require('@bmp/pg/handlers')
-const { many } = require('@bmp/pg/result')
+const { one, many } = require('@bmp/pg/result')
 
 const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt']
 const resolver = require('deep-equal-resolver')()
@@ -14,6 +14,7 @@ module.exports = _.memoize((state) => {
     db: state.db,
     emitter: state.emitter,
     table: 'admissions',
+    exclude: [ 'create' ],
     columns,
   })
 
@@ -34,6 +35,9 @@ module.exports = _.memoize((state) => {
   }
 
   return Object.assign(handlers, {
+    create (json, client = state.db) {
+      return client.query(queries.create, [json.regex, json.createdById, json.roles]).then(one)
+    },
     findMatches,
   })
 }, resolver)
