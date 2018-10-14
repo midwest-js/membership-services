@@ -19,7 +19,10 @@ module.exports = _.memoize((state) => {
   })
 
   function findMatches (email, client = state.db) {
-    return client.query(queries.getAll).then(many).then((admissions) => {
+    const limit = 1
+    const offset = 0
+
+    return client.query(queries.getAll, [ limit, offset ]).then(many).then((admissions) => {
       if (admissions) {
         admissions = admissions.filter((admission) => {
           const regex = new RegExp(admission.regex)
@@ -41,9 +44,10 @@ module.exports = _.memoize((state) => {
 
     // simple find without search functionality
     find (json, client = state.db) {
+      const limit = null
       const offset = Math.max(0, json.offset)
 
-      return client.query(queries.find, [offset]).then(many)
+      return client.query(queries.find, [ limit, offset ]).then(many)
     },
 
     // simple find by id without search functionality

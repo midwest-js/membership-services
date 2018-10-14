@@ -25,7 +25,7 @@ const defaultColumns = [
 ]
 
 module.exports = _.memoize((state) => {
-  const customColumns = _.get(state, 'config.services.users.columns') || _.get(state, 'config.userColumns')
+  const customColumns = _.get(state, 'config.users.columns') || _.get(state, 'config.userColumns')
 
   const columns = customColumns ? defaultColumns.concat(customColumns) : defaultColumns
 

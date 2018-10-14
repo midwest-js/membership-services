@@ -1,11 +1,20 @@
--- get all admissions
-
 SELECT
-    admissions.id,
-    admissions.regex,
-    array(SELECT id FROM admissions_roles LEFT OUTER JOIN roles ON admissions_roles.role_id = roles.id WHERE admissions_roles.admission_id = admissions.id) as roles,
-    users.email as createdByEmail
+    id,
+    regex,
+    array(
+      SELECT json_build_object('id', roles.id, 'name', roles.name)
+        FROM admissions_roles
+        LEFT OUTER JOIN roles
+          ON admissions_roles.role_id = roles.id
+        WHERE admissions_roles.admission_id = admissions.id
+    ) as roles,
+    created_at AS "createdAt",
+    (
+      SELECT json_build_object('id', users.id, 'username', users.username, 'email', users.email)
+        FROM users
+        WHERE users.id = admissions.created_by_id
+    ) as "createdBy"
   FROM admissions
-  INNER JOIN
-      users
-    ON users.id = admissions.created_by_id; 
+  /* LIMIT (case when $1 = 0 then NULL else $1 end) */
+  LIMIT $1
+  OFFSET $2;

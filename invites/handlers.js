@@ -26,47 +26,53 @@ function generateToken (length = 64) {
   return crypto.randomBytes(length / 2).toString('hex')
 }
 
-module.exports = _.memoize((state) => {
-  const config = state.config
+// TODO
+// implement option to choose whether to include the token or not
 
+module.exports = _.memoize((state) => {
   function create (json, client = state.db) {
     const token = generateToken()
 
     const promise = client.query(queries.create, [json.email, token, json.createdById, json.roles]).then(one)
 
-    if (config.hooks && config.hooks.invite) {
-      return promise.then(config.hooks.invite)
+    const hook = _.get(state, 'config.invites.hooks.create')
+
+    if (hook) {
+      return promise
+        .then(invite => hook(invite).then(() => invite))
     } else {
       return promise
     }
   }
 
   function find (json, client = state.db) {
+    const limit = json.limit || null
     const offset = Math.max(0, json.offset)
 
-    return client.query(queries.find, [offset]).then(many)
+    return client.query(queries.find, [ limit, offset ]).then(many)
   }
 
   function findById (id, client = state.db) {
-    return client.query(queries.findById, [id]).then(one)
+    return client.query(queries.findById, [ id ]).then(one)
   }
 
   function findByEmail (email, client = state.db) {
-    return client.query(queries.findByEmail, [email]).then(one)
+    return client.query(queries.findByEmail, [ email ]).then(one)
   }
 
   function findByTokenAndEmail (token, email, client = state.db) {
-    return client.query(queries.findByTokenAndEmail, [token, email]).then(one)
+    return client.query(queries.findByTokenAndEmail, [ token, email ]).then(one)
   }
 
   function getAll (client = state.db) {
-    return client.query(queries.getAll).then(many)
+    const limit = null
+    const offset = 0
+
+    return client.query(queries.getAll, [ limit, offset ]).then(many)
   }
 
   function consume (id, client = state.db) {
-    const query = 'UPDATE invites SET consumed_at = NOW() WHERE id = $1;'
-
-    return client.query(query, [id]).then((result) => {
+    return client.query(queries.consume, [id]).then((result) => {
       if (result.rowCount === 0) throw new Error('Error consuming invite')
     })
   }

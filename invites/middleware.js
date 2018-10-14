@@ -40,14 +40,6 @@ module.exports = _.memoize((state) => {
     }
 
     handlers.findByTokenAndEmail(req.query.token, req.query.email).then((invite) => {
-      if (!invite) {
-        return next(new Error('No invite found'))
-      }
-
-      if (invite.consumedAt) {
-        return next(new Error('Invite already consumed'))
-      }
-
       res.status(200).locals.invite = invite
 
       next()
