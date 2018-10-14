@@ -6,15 +6,15 @@ const { one, many } = require('@bmp/pg/result')
 
 const columns = ['id', 'regex', 'createdAt', 'createdById', 'modifiedAt']
 const resolver = require('deep-equal-resolver')()
+
 const queries = require('./sql')
 
-// modules > project
 module.exports = _.memoize((state) => {
   const handlers = factory({
     db: state.db,
     emitter: state.emitter,
     table: 'admissions',
-    exclude: [ 'create' ],
+    exclude: [ 'create', 'find', 'findById' ],
     columns,
   })
 
@@ -38,6 +38,19 @@ module.exports = _.memoize((state) => {
     create (json, client = state.db) {
       return client.query(queries.create, [json.regex, json.createdById, json.roles]).then(one)
     },
+
+    // simple find without search functionality
+    find (json, client = state.db) {
+      const offset = Math.max(0, json.offset)
+
+      return client.query(queries.find, [offset]).then(many)
+    },
+
+    // simple find by id without search functionality
+    findById (id, client = state.db) {
+      return client.query(queries.findById, [ id ]).then(one)
+    },
+
     findMatches,
   })
 }, resolver)
