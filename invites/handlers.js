@@ -78,12 +78,12 @@ module.exports = _.memoize((state) => {
     columns,
     exclude: ['create', 'getAll', 'find', 'findById'],
   }), {
+    consume,
     create,
     find,
     findByEmail,
     findById,
     findByTokenAndEmail,
     getAll,
-    consume,
   })
 }, resolver)
